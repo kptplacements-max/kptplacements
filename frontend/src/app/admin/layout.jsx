@@ -9,7 +9,11 @@ export default function AdminLayout({ children }) {
   if (!isSignedIn) return <RedirectToSignIn />;
 
   // Only allow admin users
-  if (user?.publicMetadata?.role !== "admin") {
+  if (
+    user?.publicMetadata?.role !== "placement-officer" &&
+    user?.publicMetadata?.role !== "placement-coordinator" &&
+    user?.publicMetadata?.role !== "principal"
+  ) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-red-50 text-red-700">
         <p className="text-lg font-semibold">🚫 Admin access only.</p>
@@ -27,7 +31,10 @@ export default function AdminLayout({ children }) {
 
           <Link href="/admin/statistics">Placement Statistics</Link>
           <Link href="/admin/placedStudents"> Placed Students Page</Link>
-          <Link href="/admin/companies">Visited Companies</Link>
+          <Link href="/admin/recentlyVisitedCompanies">
+            Recently Visited Companies
+          </Link>
+          <Link href="/admin/expenses">Expenses</Link>
           <Link href="/admin/gallery">Gallery</Link>
           <Link href="/admin/updates">Updates</Link>
           <Link href="/admin/settings">Settings</Link>

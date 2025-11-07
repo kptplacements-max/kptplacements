@@ -11,7 +11,7 @@ export default function PlacedStudentsManager() {
   const [newRow, setNewRow] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/placed-students`;
+  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/placed-students`;
 
   // Load all students
   useEffect(() => {

@@ -17,7 +17,7 @@ export default function PlacementStatisticsManager() {
       setLoading(true);
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/placements/${year}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/placements/${year}`
         );
         setData(res.data);
         setIsNew(false);
@@ -75,11 +75,14 @@ export default function PlacementStatisticsManager() {
   const handleSave = async () => {
     try {
       if (isNew) {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/placements`, data);
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/placements`,
+          data
+        );
         toast.success(`Year ${year} added successfully!`);
       } else {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/placements/${year}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/placements/${year}`,
           data
         );
         toast.success("Updated successfully!");
