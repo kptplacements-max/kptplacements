@@ -14,7 +14,7 @@ export default function PlacedStudents() {
   });
   const [loading, setLoading] = useState(true);
 
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/placed-students`;
+  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/placed-students`;
   function toTitleCase(str) {
     if (!str) return "";
     return str
