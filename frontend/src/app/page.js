@@ -14,7 +14,7 @@ export default function Home() {
         <div className="flex gap-8 text-black">
           <div className="flex flex-col items-center">
             <Users className="h-10 w-10 text-blue-500" />
-            <span>500+ Students</span>
+            <span>1500+ Students</span>
           </div>
           <div className="flex flex-col items-center">
             <Building2 className="h-10 w-10 text-green-500" />
@@ -22,7 +22,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col items-center">
             <GraduationCap className="h-10 w-10 text-orange-500" />
-            <span>6 Departments</span>
+            <span>8 Departments</span>
           </div>
         </div>
       </section>

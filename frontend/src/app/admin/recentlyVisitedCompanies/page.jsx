@@ -31,7 +31,6 @@ export default function VisitedCompanyManager() {
 
   // filters & UI
   const [filters, setFilters] = useState({
-    year: "",
     branch: "",
     company: "",
     location: "",
@@ -94,10 +93,6 @@ export default function VisitedCompanyManager() {
 
   function applyFilters(list) {
     return list.filter((c) => {
-      if (filters.year) {
-        const y = new Date(c.visitDate).getFullYear();
-        if (String(y) !== String(filters.year)) return false;
-      }
       if (
         filters.branch &&
         !c.branchList.some((b) =>
@@ -214,14 +209,6 @@ export default function VisitedCompanyManager() {
         <h2 className="text-2xl font-semibold">Recently Visited Companies</h2>
         <div className="flex gap-2">
           <input
-            placeholder="Year"
-            value={filters.year}
-            onChange={(e) =>
-              setFilters((s) => ({ ...s, year: e.target.value }))
-            }
-            className="border px-2 py-1 rounded"
-          />
-          <input
             placeholder="Branch"
             value={filters.branch}
             onChange={(e) =>
@@ -247,7 +234,7 @@ export default function VisitedCompanyManager() {
           />
           <button
             onClick={() =>
-              setFilters({ year: "", branch: "", company: "", location: "" })
+              setFilters({ branch: "", company: "", location: "" })
             }
             className="px-3 py-1 bg-gray-200 rounded"
           >
@@ -258,7 +245,7 @@ export default function VisitedCompanyManager() {
               onClick={openNewForm}
               className="px-3 py-1 bg-blue-600 text-white rounded"
             >
-              Add Company
+              Add 
             </button>
           )}
         </div>

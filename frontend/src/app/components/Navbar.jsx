@@ -17,6 +17,7 @@ export default function Navbar() {
     { href: "/studentsPlaced", label: "Students Placed" },
     { href: "/recentlyVisitedCompanies", label: "Visited Companies" },
     { href: "/events", label: "Events" },
+    { href: "/announcements", label: "Announcements" },
   ];
 
   const dropdownLinks = [
@@ -27,6 +28,7 @@ export default function Navbar() {
       external: true,
     },
     { href: "/industry-visits", label: "Industry Visit" },
+    { href: "/ourTeam", label: "Our Team" },
     { href: "/contact", label: "Contact" },
   ];
 

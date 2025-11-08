@@ -34,10 +34,9 @@ export default function AdminLayout({ children }) {
           <Link href="/admin/recentlyVisitedCompanies">
             Recently Visited Companies
           </Link>
-          <Link href="/admin/expenses">Expenses</Link>
-          <Link href="/admin/gallery">Gallery</Link>
-          <Link href="/admin/updates">Updates</Link>
-          <Link href="/admin/settings">Settings</Link>
+          <Link href="/admin/announcements">Announcements</Link>
+          <Link href="/admin/events">Events</Link>
+          <Link href="/admin/team">Our Team</Link>
         </nav>
       </aside>
 
