@@ -51,7 +51,7 @@ export default function ContactPage() {
                 PHONE
               </h2>
               <p className="leading-relaxed text-gray-700">
-                0824 221 1636 <br />
+                (0824) - 3516910 <br />
                 77604 21790
               </p>
             </div>

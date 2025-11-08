@@ -26,7 +26,7 @@ const Footer = () => {
           </p>
           <p className="mt-1 text-sm text-gray-500 flex items-center gap-2">
             <Mail className="w-4 h-4 text-blue-700" />
-            kptmng@gmail.com
+            kptmng@gmail.com, kptplacements@gmail.com
           </p>
         </div>
 
@@ -108,7 +108,7 @@ const Footer = () => {
           </h2>
           <p className="mt-2 text-sm text-gray-500 flex items-center gap-2">
             <Phone className="w-4 h-4 text-blue-700" />
-            (0824) - 3516910, 3542476, 2211636, 3515889
+            (0824) - 3516910, 3542476, 2211636, 3515889, 77604 21790
           </p>
 
           {/* Social Links */}

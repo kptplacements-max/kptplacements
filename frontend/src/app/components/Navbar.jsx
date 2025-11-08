@@ -26,6 +26,7 @@ export default function Navbar() {
       links: [
         { href: "/statistics", label: "Statistics" },
         { href: "/studentsPlaced", label: "Students Placed" },
+        { href: "/downloadsPage", label: "Important Files" },
       ],
     },
     {
@@ -33,6 +34,8 @@ export default function Navbar() {
       links: [
         { href: "/recruiters", label: "Recruiters" },
         { href: "/recentlyVisitedCompanies", label: "Recently Visited" },
+        { href: "/companySOP", label: "Company SOP" },
+        { href: "/placementProcess", label: "Placement Process" },
       ],
     },
     {
