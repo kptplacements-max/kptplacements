@@ -1,49 +1,24 @@
 "use client";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-
-const recruiters = [
-  { name: "ABB", logo: "/recruiters/abb.jpg" },
-  { name: "ACE Hardware", logo: "/recruiters/ace.jpg" },
-  { name: "Advaith Hyundai", logo: "/recruiters/advaith.jpg" },
-  { name: "Asian Paints", logo: "/recruiters/asian paints.jpg" },
-  { name: "Bell O Seal Valves", logo: "/recruiters/bell.jpg" },
-  { name: "Big Bags International", logo: "/recruiters/big bag.jpg" },
-  { name: "Birla Paints", logo: "/recruiters/birla paints.jpg" },
-  { name: "Brevera", logo: "/recruiters/brevera.jpg" },
-  { name: "Capgemini", logo: "/recruiters/cap.jpg" },
-  { name: "Cipla", logo: "/recruiters/cipla.jpg" },
-  { name: "Cronus Steel", logo: "/recruiters/cronus.jpg" },
-  { name: "Epsilon Group", logo: "/recruiters/epsilon.jpg" },
-  { name: "Godrej", logo: "/recruiters/godrej.jpg" },
-  { name: "Hindalco (Aditya Birla)", logo: "/recruiters/hindalco.jpg" },
-  { name: "JCB", logo: "/recruiters/jcb.jpg" },
-  { name: "JSW Steel", logo: "/recruiters/jsw.jpg" },
-  { name: "Kalyani Motors", logo: "/recruiters/kalyani.jpg" },
-  { name: "KEC International", logo: "/recruiters/kec.png" },
-  {
-    name: "MCF (Mangalore Chemicals & Fertilizers)",
-    logo: "/recruiters/mcf.jpg",
-  },
-  { name: "Mistral Solutions", logo: "/recruiters/mistral.jpg" },
-  { name: "Reflex Group (RLFC)", logo: "/recruiters/RLFC.jpg" },
-  { name: "Saint-Gobain", logo: "/recruiters/saint.jpg" },
-  { name: "Schneider Electric", logo: "/recruiters/schnieder.png" },
-  { name: "Sobha Ltd.", logo: "/recruiters/shobha.jpg" },
-  { name: "Tata Power", logo: "/recruiters/tata power.jpg" },
-  { name: "Tata Motors", logo: "/recruiters/tata.jpg" },
-  { name: "ThoughtWorks", logo: "/recruiters/thoughtworks.png" },
-  { name: "TIEI India", logo: "/recruiters/tiei.jpg" },
-  { name: "Toyota Kirloskar", logo: "/recruiters/toyota.jpg" },
-  { name: "Trelleborg", logo: "/recruiters/trelleborg.jpg" },
-  { name: "TVS Motors", logo: "/recruiters/tvs.jpg" },
-  { name: "UltraTech Cement", logo: "/recruiters/ultratech.jpg" },
-  { name: "Vidya Herbs", logo: "/recruiters/vidya herbs.jpg" },
-  { name: "Volvo", logo: "/recruiters/volvo.jpg" },
-  { name: "Winman Software", logo: "/recruiters/winman.jpg" },
-  { name: "Wipro", logo: "/recruiters/wipro.png" },
-];
+import axios from "axios";
 
 export default function TopRecruiters() {
+  const [logos, setLogos] = useState([]);
+  const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+  useEffect(() => {
+    const fetchLogos = async () => {
+      try {
+        const res = await axios.get(`${baseURL}/api/recruiter-logos`);
+        setLogos(res.data);
+      } catch (err) {
+        console.error("Failed to fetch recruiter logos:", err);
+      }
+    };
+    fetchLogos();
+  }, []);
+
   return (
     <section className="relative py-16 bg-gradient-to-r from-blue-50 via-white to-blue-50 border-t border-gray-200 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 text-center">
@@ -54,17 +29,19 @@ export default function TopRecruiters() {
           Trusted by leading industries and organizations
         </p>
 
-        {/* Scrolling Logos */}
-        <div className="overflow-hidden relative">
-          <div className="scroll-track flex gap-14 items-center">
-            {[...recruiters, ...recruiters].map((r, i) => (
-              <Logo key={i} {...r} />
-            ))}
+        {logos.length === 0 ? (
+          <p className="text-gray-400">No recruiter logos uploaded yet.</p>
+        ) : (
+          <div className="overflow-hidden relative">
+            <div className="scroll-track flex gap-14 items-center">
+              {[...logos, ...logos].map((r, i) => (
+                <Logo key={i} logo={r.image?.url} name={r.name} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Animation & Styling */}
       <style jsx>{`
         .scroll-track {
           display: inline-flex;
@@ -84,7 +61,6 @@ export default function TopRecruiters() {
         }
       `}</style>
 
-      {/* Fading edges */}
       <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-blue-50 via-blue-50/70 to-transparent pointer-events-none"></div>
       <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-blue-50 via-blue-50/70 to-transparent pointer-events-none"></div>
     </section>

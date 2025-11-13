@@ -1,0 +1,201 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useUser } from "@clerk/nextjs";
+
+const API = process.env.NEXT_PUBLIC_API_URL;
+
+export default function OfficerReviewPage() {
+  const { user, isLoaded } = useUser();
+  const role = user?.publicMetadata?.role;
+
+  if (!isLoaded) return <div>Loading...</div>;
+
+  if (role !== "placement-officer") {
+    return (
+      <div className="p-6 text-red-600">
+        Access denied. Only Placement Officer can review expenses.
+      </div>
+    );
+  }
+const [budgetInfo, setBudgetInfo] = useState({
+  totalBudget: 0,
+  totalUsed: 0,
+  remaining: 0,
+});
+
+// Load budget usage
+useEffect(() => {
+  async function loadBudgetUsage() {
+    try {
+      const res = await axios.get(`${API}/api/budget-usage`);
+      setBudgetInfo(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  loadBudgetUsage();
+}, []);
+
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  async function fetchExpenses() {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/api/company-expenses`);
+      setExpenses(res.data || []);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load expenses");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ⭐ OFFICER APPROVE / UNAPPROVE
+  async function toggleOfficerApproval(expense) {
+    try {
+      await axios.put(`${API}/api/company-expenses/${expense._id}`, {
+        approvedByOfficer: !expense.approvedByOfficer,
+      });
+
+      fetchExpenses();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update status");
+    }
+  }
+
+  // ⭐ OFFICER DELETE (only if not approved by Principal)
+  async function deleteExpense(expenseId) {
+    if (!confirm("Are you sure you want to delete this expense?")) return;
+
+    try {
+      await axios.delete(`${API}/api/company-expenses/${expenseId}`);
+      fetchExpenses();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete");
+    }
+  }
+
+  return (
+    <div className="p-6">
+        {/* Remaining Budget Box */}
+<div className="mb-6 p-4 bg-blue-100 border border-blue-300 rounded">
+  <h3 className="font-bold text-lg text-blue-800">Budget Overview</h3>
+  <p className="text-gray-700">
+    <strong>Total Budget:</strong> ₹{budgetInfo.totalBudget}
+  </p>
+  <p className="text-gray-700">
+    <strong>Used:</strong> ₹{budgetInfo.totalUsed}
+  </p>
+  <p className="text-green-700 font-bold">
+    <strong>Remaining:</strong> ₹{budgetInfo.remaining}
+  </p>
+</div>
+
+      <h2 className="text-3xl font-bold mb-6">Review Company Expenses</h2>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : expenses.length === 0 ? (
+        <div className="text-gray-600">No expenses found.</div>
+      ) : (
+        <div className="space-y-4">
+          {expenses.map((exp) => (
+            <div
+              key={exp._id}
+              className="border rounded-lg p-4 bg-white shadow-sm"
+            >
+              {/* HEADER */}
+              <div className="flex justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">
+                    {exp.company
+                      ? `${exp.company.companyName} (${exp.company.location})`
+                      : `Other: ${exp.otherCategory}`}
+                  </h3>
+
+                  {exp.company && (
+                    <p className="text-sm text-gray-600">
+                      {new Date(exp.company.visitDate).toLocaleDateString()}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-gray-500 mt-1">
+                    Submitted by: <strong>{exp.submittedBy}</strong>
+                  </p>
+                </div>
+
+                {/* BADGE */}
+                <div>
+                  {exp.approvedByOfficer ? (
+                    <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded">
+                      Officer Approved
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm rounded">
+                      Pending
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* ITEMS */}
+              <div className="mt-4">
+                {exp.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex justify-between border-b py-1 text-sm"
+                  >
+                    <span>{item.description}</span>
+                    <span className="font-semibold">₹{item.amount}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* TOTAL */}
+              <div className="flex justify-between mt-3 font-semibold">
+                <span>Total:</span>
+                <span>₹{exp.totalAmount}</span>
+              </div>
+
+              {/* ACTION BUTTONS */}
+              <div className="flex gap-3 mt-4">
+
+                {/* APPROVE */}
+                <button
+                  onClick={() => toggleOfficerApproval(exp)}
+                  className={`px-4 py-2 rounded text-white ${
+                    exp.approvedByOfficer
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
+                >
+                  {exp.approvedByOfficer ? "Unapprove" : "Approve"}
+                </button>
+
+                {/* DELETE */}
+                {!exp.approvedByPrincipal && (
+                  <button
+                    onClick={() => deleteExpense(exp._id)}
+                    className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

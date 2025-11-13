@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { Building2, Users, GraduationCap, Briefcase } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,10 +11,30 @@ import RecruiterCTA from "./components/RecruiterCTA";
 import AboutSection from "./components/AboutSection";
 
 export default function Home() {
-  // 🖼️ Include all 21 hero images (placed in /public/)
-  const heroImages = Array.from({ length: 21 }, (_, i) => `/${i + 1}.jpg`);
+  const [heroImages, setHeroImages] = useState([]);
   const [current, setCurrent] = useState(0);
+  const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
+  // ✅ Fetch all hero images from backend
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const res = await axios.get(`${baseURL}/api/home-hero`);
+        if (res.data.length > 0) {
+          setHeroImages(res.data);
+        } else {
+          // Fallback if no image uploaded yet
+          setHeroImages([{ image: { url: "/placeholder.jpg" } }]);
+        }
+      } catch (err) {
+        console.error("Failed to load hero images:", err);
+        setHeroImages([{ image: { url: "/placeholder.jpg" } }]);
+      }
+    };
+    fetchImages();
+  }, [baseURL]);
+
+  // ✅ Slideshow auto-transition
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % heroImages.length);
@@ -29,7 +50,7 @@ export default function Home() {
         {heroImages.map((img, index) => (
           <Image
             key={index}
-            src={img}
+            src={img.image?.url || "/placeholder.jpg"}
             alt={`Hero ${index + 1}`}
             fill
             priority={index === 0}
@@ -42,7 +63,7 @@ export default function Home() {
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-blue-900/70 via-blue-800/50 to-blue-900/80"></div>
 
-        {/* Content */}
+        {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
             Training & Placement Cell

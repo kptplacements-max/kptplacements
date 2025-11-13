@@ -1,19 +1,19 @@
 import express from "express";
+import multer from "multer";
 import {
   createPlacedStudent,
   getAllPlacedStudents,
-  getPlacedStudentById,
   updatePlacedStudent,
   deletePlacedStudent,
 } from "../controllers/placedStudentController.js";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
-// CRUD Endpoints
-router.post("/", createPlacedStudent); // Add new student
-router.get("/", getAllPlacedStudents); // Get all (supports filters)
-router.get("/:id", getPlacedStudentById); // Get single student by ID
-router.put("/:id", updatePlacedStudent); // Update student details
-router.delete("/:id", deletePlacedStudent); // Delete record
+// Routes
+router.post("/", upload.single("image"), createPlacedStudent);
+router.get("/", getAllPlacedStudents);
+router.put("/:id", upload.single("image"), updatePlacedStudent);
+router.delete("/:id", deletePlacedStudent);
 
 export default router;

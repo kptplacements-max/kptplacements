@@ -1,4 +1,5 @@
 import express from "express";
+import multer from "multer";
 import {
   createVisitedCompany,
   getAllVisitedCompanies,
@@ -9,10 +10,28 @@ import {
 
 const router = express.Router();
 
-router.post("/", createVisitedCompany);
+// Multer config
+const upload = multer({ dest: "uploads/" });
+
+// ======================================
+// IMPORTANT: GET ROUTES COME FIRST
+// ======================================
 router.get("/", getAllVisitedCompanies);
 router.get("/:id", getVisitedCompanyById);
-router.put("/:id", updateVisitedCompany);
+
+// ======================================
+// CREATE (multer only for POST)
+// ======================================
+router.post("/", upload.single("image"), createVisitedCompany);
+
+// ======================================
+// UPDATE (multer only for PUT)
+// ======================================
+router.put("/:id", upload.single("image"), updateVisitedCompany);
+
+// ======================================
+// DELETE
+// ======================================
 router.delete("/:id", deleteVisitedCompany);
 
 export default router;

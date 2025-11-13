@@ -4,15 +4,30 @@ import VisitedCompany from "../models/visitedCompanyModel.js";
 // ✅ Add expense entry for a company
 export const createExpense = async (req, res) => {
   try {
-    const expense = await CompanyExpense.create(req.body);
-    await VisitedCompany.findByIdAndUpdate(expense.company, {
-      $push: { expenses: expense._id },
-    });
+    console.log("Received expense body:", req.body);   // 🔥 ADD THIS LOG
+
+    const payload = { ...req.body };
+
+    if (!req.body.company) {
+      delete payload.company;
+    }
+
+    const expense = await CompanyExpense.create(payload);
+
+    if (expense.company) {
+      await VisitedCompany.findByIdAndUpdate(expense.company, {
+        $push: { expenses: expense._id },
+      });
+    }
+
     res.status(201).json(expense);
   } catch (error) {
+    console.log("EXPENSE ERROR:", error);  // 🔥 ADD THIS
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 // ✅ Get all expenses (optionally filter by company)
 export const getAllExpenses = async (req, res) => {

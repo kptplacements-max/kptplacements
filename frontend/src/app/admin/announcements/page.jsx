@@ -4,6 +4,27 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+// MUI COMPONENTS
+import {
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  TextField,
+  Typography,
+  Table,
+  TableBody,
+  TableHead,
+  TableCell,
+  TableRow,
+  TableContainer,
+  Paper,
+} from "@mui/material";
+
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import LinkIcon from "@mui/icons-material/Link";
+
 export default function AnnouncementsAdminPage() {
   const [announcements, setAnnouncements] = useState([]);
   const [formData, setFormData] = useState({
@@ -18,7 +39,6 @@ export default function AnnouncementsAdminPage() {
   const baseURL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-  // ✅ Fetch all announcements
   const fetchAnnouncements = async () => {
     try {
       const res = await axios.get(`${baseURL}/api/announcements`);
@@ -32,15 +52,14 @@ export default function AnnouncementsAdminPage() {
     fetchAnnouncements();
   }, [baseURL]);
 
-  // ✅ Handle input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Submit (Create or Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       if (editingId) {
         await axios.put(`${baseURL}/api/announcements/${editingId}`, formData);
@@ -60,12 +79,10 @@ export default function AnnouncementsAdminPage() {
       setEditingId(null);
       fetchAnnouncements();
     } catch (error) {
-      console.error("Error saving announcement:", error);
       toast.error("Something went wrong!");
     }
   };
 
-  // ✅ Edit
   const handleEdit = (a) => {
     setEditingId(a._id);
     setFormData({
@@ -77,7 +94,6 @@ export default function AnnouncementsAdminPage() {
     });
   };
 
-  // ✅ Delete
   const handleDelete = async (id) => {
     if (confirm("Are you sure you want to delete this announcement?")) {
       try {
@@ -91,179 +107,194 @@ export default function AnnouncementsAdminPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 text-gray-700">
-      <h1 className="text-2xl font-bold mb-6 text-blue-700 text-center">
-        {editingId ? "Edit Announcement" : "Add New Announcement"}
-      </h1>
-
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-md rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border border-gray-200 mb-10"
+    <Box maxWidth="1200px" mx="auto" p={4}>
+      <Typography
+        variant="h4"
+        textAlign="center"
+        fontWeight="bold"
+        mb={4}
+        color="primary"
       >
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Title *</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
+        {editingId ? "Edit Announcement" : "Add New Announcement"}
+      </Typography>
 
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Department *</label>
-          <input
-            type="text"
-            name="department"
-            placeholder="e.g. Computer Science"
-            value={formData.department}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
+      {/* FORM */}
+      <Card elevation={3} sx={{ mb: 5 }}>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Title"
+                  name="title"
+                  required
+                  fullWidth
+                  value={formData.title}
+                  onChange={handleChange}
+                />
+              </Grid>
 
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Date *</label>
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Department"
+                  name="department"
+                  required
+                  fullWidth
+                  value={formData.department}
+                  onChange={handleChange}
+                />
+              </Grid>
 
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Link</label>
-          <input
-            type="url"
-            name="link"
-            placeholder="https://..."
-            value={formData.link}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  type="date"
+                  label="Date"
+                  name="date"
+                  required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={formData.date}
+                  onChange={handleChange}
+                />
+              </Grid>
 
-        <div className="flex flex-col col-span-full">
-          <label className="text-gray-700 font-medium mb-1">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={3}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          ></textarea>
-        </div>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Optional Link"
+                  name="link"
+                  fullWidth
+                  value={formData.link}
+                  onChange={handleChange}
+                />
+              </Grid>
 
-        <div className="col-span-full flex justify-center mt-4">
-          <button
-            type="submit"
-            className="bg-blue-600 text-white font-medium px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
-          >
-            {editingId ? "Update Announcement" : "Add Announcement"}
-          </button>
-        </div>
-      </form>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  name="description"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </Grid>
 
-      {/* Table View */}
-      <h2 className="text-xl font-semibold mb-4">All Announcements</h2>
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg border border-gray-200">
-        <table className="min-w-full table-auto">
-          <thead className="bg-blue-700 text-white">
-            <tr>
-              <th className="px-4 py-3 text-left text-sm font-semibold">
+              <Grid item xs={12} textAlign="center">
+                {/* NORMAL HTML BUTTON (NO MUI) */}
+                <button
+                  type="submit"
+                  style={{
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                    padding: "10px 24px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    border: "none",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                  }}
+                >
+                  {editingId ? "Update Announcement" : "Add Announcement"}
+                </button>
+              </Grid>
+            </Grid>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Typography variant="h5" fontWeight="bold" mb={2}>
+        All Announcements
+      </Typography>
+
+      {/* TABLE */}
+      <TableContainer component={Paper} elevation={3}>
+        <Table>
+          <TableHead sx={{ backgroundColor: "#1976d2" }}>
+            <TableRow>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                 Title
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold">
+              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                 Department
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold">
+              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                 Date
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-semibold">
+              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                 Description
-              </th>
-              <th className="px-4 py-3 text-center text-sm font-semibold">
+              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
                 Link
-              </th>
-              <th className="px-4 py-3 text-center text-sm font-semibold">
+              </TableCell>
+              <TableCell
+                sx={{ color: "white", fontWeight: "bold" }}
+                align="center"
+              >
                 Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
             {announcements.length === 0 ? (
-              <tr>
-                <td
-                  colSpan="6"
-                  className="text-center py-6 text-gray-500 italic"
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  align="center"
+                  sx={{ py: 4, color: "gray" }}
                 >
                   No announcements found.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               announcements.map((a) => (
-                <tr
-                  key={a._id}
-                  className="border-b hover:bg-blue-50 transition"
-                >
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                    {a.title}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
-                    {a.department}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                <TableRow key={a._id} hover>
+                  <TableCell>{a.title}</TableCell>
+                  <TableCell>{a.department}</TableCell>
+                  <TableCell>
                     {new Date(a.date).toLocaleDateString("en-IN", {
                       day: "2-digit",
                       month: "short",
                       year: "numeric",
                     })}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-700 line-clamp-2">
+                  </TableCell>
+                  <TableCell sx={{ maxWidth: "250px" }}>
                     {a.description || "-"}
-                  </td>
-                  <td className="px-4 py-3 text-center">
+                  </TableCell>
+
+                  <TableCell>
                     {a.link ? (
-                      <a
-                        href={a.link}
-                        target="_blank"
-                        className="text-blue-600 font-medium hover:underline"
-                      >
-                        Open
+                      <a href={a.link} target="_blank" style={{ cursor: "pointer" }}>
+                        <LinkIcon color="primary" />
                       </a>
                     ) : (
-                      <span className="text-gray-400">—</span>
+                      "—"
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => handleEdit(a)}
-                        className="bg-yellow-400 text-gray-900 px-3 py-1 rounded"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(a._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                  </TableCell>
+
+                  {/* NORMAL CLICKABLE ICONS */}
+                  <TableCell align="center">
+                    <span
+                      onClick={() => handleEdit(a)}
+                      style={{ cursor: "pointer", padding: "6px" }}
+                    >
+                      <EditIcon sx={{ color: "#ed6c02" }} />
+                    </span>
+
+                    <span
+                      onClick={() => handleDelete(a._id)}
+                      style={{ cursor: "pointer", padding: "6px" }}
+                    >
+                      <DeleteIcon sx={{ color: "#d32f2f" }} />
+                    </span>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }

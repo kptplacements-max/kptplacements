@@ -15,6 +15,8 @@ export default function PlacedStudents() {
   const [loading, setLoading] = useState(true);
 
   const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/placed-students`;
+
+  // ✅ Capitalize Words
   function toTitleCase(str) {
     if (!str) return "";
     return str
@@ -24,7 +26,7 @@ export default function PlacedStudents() {
       .join(" ");
   }
 
-  // Fetch all placed students
+  // ✅ Fetch all students
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,53 +42,52 @@ export default function PlacedStudents() {
     fetchData();
   }, []);
 
-  // Apply filters
+  // ✅ Apply filters
   useEffect(() => {
     let filteredData = students;
 
     if (filters.year)
       filteredData = filteredData.filter(
-        (s) => s.yearOfPassing === Number(filters.year)
+        (s) => String(s.yearOfPassing) === String(filters.year)
       );
     if (filters.branch)
       filteredData = filteredData.filter((s) =>
-        s.branch.toLowerCase().includes(filters.branch.toLowerCase())
+        s.branch?.toLowerCase().includes(filters.branch.toLowerCase())
       );
     if (filters.company)
       filteredData = filteredData.filter((s) =>
-        s.companyName.toLowerCase().includes(filters.company.toLowerCase())
+        s.companyName?.toLowerCase().includes(filters.company.toLowerCase())
       );
     if (filters.location)
       filteredData = filteredData.filter((s) =>
-        s.location.toLowerCase().includes(filters.location.toLowerCase())
+        s.location?.toLowerCase().includes(filters.location.toLowerCase())
       );
 
     setFiltered(filteredData);
   }, [filters, students]);
 
-  // Handle filter change
   const handleChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
   if (loading)
-    return <p className="text-center py-10 text-gray-500">Loading...</p>;
+    return <p className="text-center py-10 text-gray-500 text-lg">Loading...</p>;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 md:px-10">
-      <h1 className="text-3xl md:text-4xl font-bold text-blue-900 text-center mb-10">
-        Placed Students
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-sky-50 py-12 px-4 md:px-10">
+      <h1 className="text-4xl font-extrabold text-center text-blue-900 mb-10 drop-shadow-sm">
+        🌟 Placed Students
       </h1>
 
-      {/* Filters Section */}
-      <div className="flex flex-wrap justify-center gap-4 mb-10 bg-white p-4 rounded-lg shadow-md">
+      {/* ✅ Filters */}
+      <div className="flex flex-wrap justify-center gap-4 mb-10 bg-white/70 backdrop-blur-md p-4 rounded-xl shadow-lg border border-blue-100">
         <select
           value={filters.year}
           onChange={(e) => handleChange("year", e.target.value)}
-          className="border rounded-md px-3 py-2 text-gray-700"
+          className="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
         >
           <option value="">All Years</option>
-          {[2026, 2027, 2028, 2029, 2030, 2031].map((year) => (
+          {[2024, 2025, 2026, 2027, 2028].map((year) => (
             <option key={year} value={year}>
               {year}
             </option>
@@ -95,10 +96,10 @@ export default function PlacedStudents() {
 
         <input
           type="text"
-          placeholder="Filter by Department"
+          placeholder="Filter by Branch"
           value={filters.branch}
           onChange={(e) => handleChange("branch", e.target.value)}
-          className="border rounded-md px-3 py-2 text-gray-700"
+          className="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
         />
 
         <input
@@ -106,7 +107,7 @@ export default function PlacedStudents() {
           placeholder="Filter by Company"
           value={filters.company}
           onChange={(e) => handleChange("company", e.target.value)}
-          className="border rounded-md px-3 py-2 text-gray-700"
+          className="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
         />
 
         <input
@@ -114,26 +115,27 @@ export default function PlacedStudents() {
           placeholder="Filter by Location"
           value={filters.location}
           onChange={(e) => handleChange("location", e.target.value)}
-          className="border rounded-md px-3 py-2 text-gray-700"
+          className="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
         />
 
         <button
           onClick={() =>
             setFilters({ year: "", branch: "", company: "", location: "" })
           }
-          className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+          className="bg-gray-600 text-white px-5 py-2 rounded-md hover:bg-gray-700 transition"
         >
           Clear
         </button>
       </div>
 
-      {/* Results Count */}
-      <div className="text-gray-600 text-center mb-6">
-        Showing <strong>{filtered.length}</strong> placed{" "}
+      {/* ✅ Results Info */}
+      <p className="text-center text-gray-600 mb-6 text-sm">
+        Showing{" "}
+        <strong className="text-blue-700">{filtered.length}</strong>{" "}
         {filtered.length === 1 ? "student" : "students"}
-      </div>
+      </p>
 
-      {/* Cards Grid */}
+      {/* ✅ Students Grid */}
       {filtered.length === 0 ? (
         <p className="text-center text-gray-500 py-10">
           No students match your filters.
@@ -154,25 +156,24 @@ export default function PlacedStudents() {
             return (
               <div
                 key={s._id}
-                className={`bg-gradient-to-br ${bgGradient} rounded-2xl shadow-lg p-6 flex flex-col items-center hover:-translate-y-1 hover:shadow-2xl transition-transform duration-300`}
+                className={`bg-gradient-to-br ${bgGradient} rounded-2xl shadow-lg p-6 flex flex-col items-center hover:-translate-y-2 hover:shadow-2xl transition-transform duration-300`}
               >
-                {/* Photo */}
+                {/* ✅ Photo */}
                 <div className="relative mb-4">
                   <img
-                    src={s.photoUrl}
+                    src={
+                      s.image?.url ||
+                      "https://via.placeholder.com/150x150.png?text=No+Photo"
+                    }
                     alt={s.name}
                     className="w-36 h-36 object-cover rounded-full border-4 border-white shadow-md"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/150x150.png?text=No+Photo";
-                    }}
                   />
                   <div className="absolute bottom-1 right-1 bg-white/90 text-[10px] text-gray-600 px-2 py-0.5 rounded-md shadow">
                     {s.yearOfPassing}
                   </div>
                 </div>
 
-                {/* Name */}
+                {/* ✅ Name */}
                 <h2 className="text-xl font-bold text-gray-800 mb-1 text-center">
                   {toTitleCase(s.name)}
                 </h2>
@@ -183,15 +184,15 @@ export default function PlacedStudents() {
                   </span>
                 </p>
 
-                {/* Branch */}
-                <div className="text-sm text-gray-700 mb-2">
+                {/* ✅ Branch */}
+                <p className="text-sm text-gray-700 mb-2">
                   <strong>Branch:</strong>{" "}
                   <span className="text-blue-700 font-semibold">
                     {s.branch?.toUpperCase()}
                   </span>
-                </div>
+                </p>
 
-                {/* Company */}
+                {/* ✅ Company */}
                 <div className="mt-2 text-center bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
                   <div className="text-sm font-semibold text-blue-800">
                     {toTitleCase(s.companyName)}
@@ -203,12 +204,12 @@ export default function PlacedStudents() {
                   )}
                 </div>
 
-                {/* Location */}
+                {/* ✅ Location */}
                 <div className="mt-2 text-sm text-gray-700 flex items-center gap-1">
                   📍 {toTitleCase(s.location)}
                 </div>
 
-                {/* Package */}
+                {/* ✅ Package */}
                 <div className="mt-3 text-green-700 font-bold text-lg">
                   💰 {s.packageOffered} LPA
                 </div>

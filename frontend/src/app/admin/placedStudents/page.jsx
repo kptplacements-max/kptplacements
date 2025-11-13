@@ -1,240 +1,345 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { Plus, Save, Trash2, Edit2, X } from "lucide-react";
+import {
+  Grid,
+  Card,
+  Typography,
+  TextField,
+  Avatar,
+  CircularProgress,
+  Box,
+} from "@mui/material";
+import { Add, Delete, Edit } from "@mui/icons-material";
+import { FaUpload } from "react-icons/fa";
 
 export default function PlacedStudentsManager() {
   const [students, setStudents] = useState([]);
-  const [editingRow, setEditingRow] = useState(null);
-  const [newRow, setNewRow] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: "",
+    registerNumber: "",
+    branch: "",
+    yearOfPassing: "",
+    companyName: "",
+    location: "",
+    packageOffered: "",
+    designation: "",
+    image: null,
+  });
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/placed-students`;
 
-  // Load all students
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(API_URL);
-        setStudents(res.data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to fetch placed students");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // Handle input change
-  const handleChange = (i, field, value) => {
-    const updated = [...students];
-    updated[i][field] = value;
-    setStudents(updated);
-  };
-
-  // Add new blank row
-  const handleAddRow = () => {
-    const emptyRow = {
-      name: "",
-      registerNumber: "",
-      branch: "",
-      yearOfPassing: "",
-      companyName: "",
-      location: "",
-      packageOffered: "",
-      designation: "",
-      photoUrl: "",
-    };
-    setStudents([emptyRow, ...students]);
-    setNewRow(true);
-    setEditingRow(0);
-  };
-
-  // Save record
-  const handleSave = async (i) => {
-    const student = students[i];
+  // ✅ Fetch students
+  const fetchStudents = async () => {
     try {
-      if (student._id) {
-        await axios.put(`${API_URL}/${student._id}`, student);
-        toast.success("Updated successfully!");
-      } else {
-        const res = await axios.post(API_URL, student);
-        const updated = [...students];
-        updated[i] = res.data;
-        setStudents(updated);
-        toast.success("Added new student!");
-      }
-      setEditingRow(null);
-      setNewRow(false);
-    } catch (err) {
-      console.error(err);
-      toast.error("Save failed");
+      setLoading(true);
+      const res = await axios.get(API_URL);
+      setStudents(res.data);
+    } catch {
+      toast.error("Failed to load students");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Delete student
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  // ✅ Handle file change
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, image: file }));
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // ✅ Handle submit (Add or Update)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData();
+    Object.keys(formData).forEach((key) => data.append(key, formData[key]));
+
+    try {
+      setUploading(true);
+
+      if (editingId) {
+        // Update existing student
+        await axios.put(`${API_URL}/${editingId}`, data);
+        toast.success("Student updated successfully!");
+      } else {
+        // Add new student
+        if (!formData.image) return toast.error("Please upload an image");
+        await axios.post(API_URL, data);
+        toast.success("Placed student added successfully!");
+      }
+
+      setFormData({
+        name: "",
+        registerNumber: "",
+        branch: "",
+        yearOfPassing: "",
+        companyName: "",
+        location: "",
+        packageOffered: "",
+        designation: "",
+        image: null,
+      });
+      setPreview(null);
+      setEditingId(null);
+      fetchStudents();
+    } catch {
+      toast.error("Failed to save student");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ✅ Delete student
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this student?")) return;
     try {
       await axios.delete(`${API_URL}/${id}`);
-      setStudents(students.filter((s) => s._id !== id));
-      toast.success("Deleted successfully");
-    } catch (err) {
-      console.error(err);
+      toast.info("Student deleted");
+      fetchStudents();
+    } catch {
       toast.error("Delete failed");
     }
   };
 
-  if (loading)
-    return <p className="text-center py-10 text-gray-500">Loading data...</p>;
+  // ✅ Edit student (populate form)
+  const handleEdit = (student) => {
+    setFormData({
+      name: student.name,
+      registerNumber: student.registerNumber,
+      branch: student.branch,
+      yearOfPassing: student.yearOfPassing,
+      companyName: student.companyName,
+      location: student.location,
+      packageOffered: student.packageOffered,
+      designation: student.designation,
+      image: null,
+    });
+    setPreview(student.image?.url || null);
+    setEditingId(student._id);
+    toast.info(`Editing ${student.name}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
-    <div className="p-4 sm:p-6 bg-white rounded-xl shadow-md overflow-x-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-blue-800">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(to right, #e3f2fd, #ffffff)",
+        py: 6,
+        px: 2,
+      }}
+    >
+      <Box maxWidth="md" mx="auto" textAlign="center" mb={5}>
+        <Typography variant="h4" fontWeight={700} color="primary" gutterBottom>
           Placed Students Management
-        </h1>
-        <button
-          onClick={handleAddRow}
-          className="flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700"
-        >
-          <Plus size={18} /> Add Student
-        </button>
-      </div>
+        </Typography>
+      </Box>
 
-      <table className="min-w-full text-xs md:text-sm border-collapse border border-gray-300">
-        <thead className="bg-blue-800 text-white">
-          <tr>
-            {[
-              "Photo",
-              "Name",
-              "Register No",
-              "Branch",
-              "Year of Passing",
-              "Company Name",
-              "Location",
-              "Package (LPA)",
-              "Designation",
-              "Actions",
-            ].map((h) => (
-              <th key={h} className="border px-2 py-2 text-center">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {students.map((s, i) => (
-            <tr
-              key={s._id || i}
-              className={`text-center text-gray-700 ${
-                i % 2 === 0 ? "bg-gray-50" : "bg-white"
-              } hover:bg-blue-50 transition`}
-            >
-              {/* Photo */}
-              <td className="border p-2">
-                {editingRow === i ? (
-                  <input
-                    type="text"
-                    value={s.photoUrl}
-                    onChange={(e) =>
-                      handleChange(i, "photoUrl", e.target.value)
-                    }
-                    className="border rounded w-28 text-xs"
-                    placeholder="Photo URL"
-                  />
-                ) : s.photoUrl ? (
-                  <img
-                    src={s.photoUrl}
-                    alt="photo"
-                    className="w-12 h-12 object-cover rounded-full mx-auto"
-                  />
-                ) : (
-                  <span className="text-gray-400">No Photo</span>
-                )}
-              </td>
-
-              {/* Editable Fields */}
-              {[
-                "name",
-                "registerNumber",
-                "branch",
-                "yearOfPassing",
-                "companyName",
-                "location",
-                "packageOffered",
-                "designation",
-              ].map((field) => (
-                <td key={field} className="border p-2">
-                  {editingRow === i ? (
-                    <input
-                      type={
-                        field === "yearOfPassing" || field === "packageOffered"
-                          ? "number"
-                          : "text"
+      {/* ✅ Add / Edit Form */}
+      <Card
+        sx={{
+          maxWidth: 900,
+          mx: "auto",
+          p: 4,
+          mb: 5,
+          boxShadow: 4,
+          borderRadius: 3,
+          backgroundColor: "#ffffffc8",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={2}>
+                {[
+                  { name: "name", label: "Full Name" },
+                  { name: "registerNumber", label: "Register Number" },
+                  { name: "branch", label: "Branch" },
+                  { name: "yearOfPassing", label: "Year of Passing", type: "number" },
+                  { name: "companyName", label: "Company Name" },
+                  { name: "location", label: "Location" },
+                  { name: "packageOffered", label: "Package (LPA)", type: "number" },
+                  { name: "designation", label: "Designation" },
+                ].map((field) => (
+                  <Grid item xs={12} sm={6} key={field.name}>
+                    <TextField
+                      fullWidth
+                      label={field.label}
+                      name={field.name}
+                      type={field.type || "text"}
+                      value={formData[field.name]}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, [field.name]: e.target.value }))
                       }
-                      value={s[field] ?? ""}
-                      onChange={(e) => handleChange(i, field, e.target.value)}
-                      className="border rounded w-full px-1 text-xs"
+                      required={field.name !== "designation"}
+                      variant="outlined"
+                      size="small"
                     />
-                  ) : (
-                    s[field] || "-"
-                  )}
-                </td>
-              ))}
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
 
-              {/* Action Buttons */}
-              <td className="border p-2">
-                {editingRow === i ? (
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      onClick={() => handleSave(i)}
-                      className="bg-green-600 p-1.5 rounded text-white hover:bg-green-700"
-                    >
-                      <Save size={16} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (newRow) setStudents(students.slice(1));
-                        setEditingRow(null);
+            {/* ✅ Right side - Image upload */}
+            <Grid
+              item
+              xs={12}
+              md={4}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              textAlign="center"
+            >
+              <Avatar
+                src={preview || ""}
+                alt="Preview"
+                sx={{
+                  width: 120,
+                  height: 120,
+                  mb: 2,
+                  boxShadow: 3,
+                  border: "2px solid #1976d2",
+                }}
+              />
+              <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition mb-3">
+                <FaUpload /> Upload Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleFileChange}
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={uploading}
+                className={`${
+                  editingId
+                    ? "bg-orange-600 hover:bg-orange-700"
+                    : "bg-green-600 hover:bg-green-700"
+                } text-white px-4 py-2 rounded-lg flex items-center gap-2 transition`}
+              >
+                <Add fontSize="small" />
+                {uploading
+                  ? "Saving..."
+                  : editingId
+                  ? "Update Student"
+                  : "Add Student"}
+              </button>
+            </Grid>
+          </Grid>
+        </form>
+      </Card>
+
+      {/* ✅ Student Table */}
+      {loading ? (
+        <Box textAlign="center" mt={5}>
+          <CircularProgress />
+          <Typography mt={2}>Loading Students...</Typography>
+        </Box>
+      ) : students.length === 0 ? (
+        <Typography color="text.secondary" mt={3} textAlign="center">
+          No students added yet.
+        </Typography>
+      ) : (
+        <Box
+          sx={{
+            maxWidth: "95%",
+            mx: "auto",
+            mt: 5,
+            overflowX: "auto",
+            backgroundColor: "#fff",
+            borderRadius: 3,
+            boxShadow: 3,
+          }}
+        >
+          <table className="min-w-full border-collapse border border-gray-200 text-sm">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="px-4 py-3 border border-gray-200 text-left">Photo</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Name</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Reg No</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Branch</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Company</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Designation</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Location</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Year</th>
+                <th className="px-4 py-3 border border-gray-200 text-left">Package</th>
+                <th className="px-4 py-3 border border-gray-200 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((s, i) => (
+                <tr
+                  key={s._id}
+                  className={`hover:bg-blue-50 transition ${
+                    i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  }`}
+                >
+                  <td className="border border-gray-200 px-3 py-2 text-center">
+                    <Avatar
+                      src={s.image?.url}
+                      alt={s.name}
+                      sx={{
+                        width: 45,
+                        height: 45,
+                        border: "2px solid #90caf9",
+                        mx: "auto",
                       }}
-                      className="bg-gray-400 p-1.5 rounded text-white hover:bg-gray-500"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      onClick={() => setEditingRow(i)}
-                      className="bg-blue-600 p-1.5 rounded text-white hover:bg-blue-700"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s._id)}
-                      className="bg-red-600 p-1.5 rounded text-white hover:bg-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {students.length === 0 && (
-        <p className="text-center text-gray-500 py-6">
-          No placed students found. Click “Add Student” to begin.
-        </p>
+                    />
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2 font-semibold">{s.name}</td>
+                  <td className="border border-gray-200 px-3 py-2">{s.registerNumber}</td>
+                  <td className="border border-gray-200 px-3 py-2">{s.branch}</td>
+                  <td className="border border-gray-200 px-3 py-2 text-blue-700 font-medium">
+                    {s.companyName}
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    {s.designation || "Intern"}
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">{s.location}</td>
+                  <td className="border border-gray-200 px-3 py-2">{s.yearOfPassing}</td>
+                  <td className="border border-gray-200 px-3 py-2 text-green-600 font-semibold">
+                    {s.packageOffered} LPA
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2 text-center">
+                    <div className="flex justify-center gap-2">
+                      <button
+                        onClick={() => handleEdit(s)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1"
+                      >
+                        <Edit fontSize="small" /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s._id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1"
+                      >
+                        <Delete fontSize="small" /> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

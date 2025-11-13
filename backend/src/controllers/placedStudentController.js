@@ -1,74 +1,128 @@
 import PlacedStudent from "../models/placedStudentModel.js";
+import cloudinary from "../config/cloudinary.js";
+import fs from "fs";
 
-// ✅ Create new placed student
+// ✅ Create Placed Student with image upload
 export const createPlacedStudent = async (req, res) => {
   try {
-    const newStudent = await PlacedStudent.create(req.body);
-    res.status(201).json(newStudent);
-  } catch (err) {
-    console.error("Error creating placed student:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
+    const {
+      name,
+      registerNumber,
+      branch,
+      yearOfPassing,
+      companyName,
+      location,
+      packageOffered,
+      designation,
+    } = req.body;
 
-// ✅ Get all students (with filters)
-export const getAllPlacedStudents = async (req, res) => {
-  try {
-    const { year, branch, company } = req.query;
-    const filter = {};
+    if (!req.file)
+      return res.status(400).json({ message: "Image is required" });
 
-    if (year) filter.yearOfPassing = year;
-    if (branch) filter.branch = new RegExp(branch, "i");
-    if (company) filter.companyName = new RegExp(company, "i");
-
-    const students = await PlacedStudent.find(filter).sort({
-      yearOfPassing: -1,
-      name: 1,
+    // Upload image to Cloudinary
+    const upload = await cloudinary.uploader.upload(req.file.path, {
+      folder: "kpt_placed_students",
     });
 
-    res.json(students);
+    // Delete local temp file
+    fs.unlinkSync(req.file.path);
+
+    const student = await PlacedStudent.create({
+      name,
+      registerNumber,
+      branch,
+      yearOfPassing,
+      companyName,
+      location,
+      packageOffered,
+      designation,
+      image: {
+        public_id: upload.public_id,
+        url: upload.secure_url,
+      },
+    });
+
+    res.status(201).json(student);
   } catch (err) {
-    console.error("Error fetching placed students:", err);
-    res.status(500).json({ message: err.message });
+    console.error("Error creating student:", err);
+    res.status(500).json({ message: "Failed to create student" });
   }
 };
 
-// ✅ Get single student by ID
-export const getPlacedStudentById = async (req, res) => {
+// ✅ Get all students
+export const getAllPlacedStudents = async (req, res) => {
   try {
-    const student = await PlacedStudent.findById(req.params.id);
-    if (!student)
-      return res.status(404).json({ message: "Placed student not found" });
-    res.json(student);
+    const students = await PlacedStudent.find().sort({ createdAt: -1 });
+    res.status(200).json(students);
   } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// ✅ Update student details
-export const updatePlacedStudent = async (req, res) => {
-  try {
-    const updated = await PlacedStudent.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!updated)
-      return res.status(404).json({ message: "Placed student not found" });
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Failed to fetch students" });
   }
 };
 
 // ✅ Delete student
 export const deletePlacedStudent = async (req, res) => {
   try {
-    const deleted = await PlacedStudent.findByIdAndDelete(req.params.id);
-    if (!deleted)
-      return res.status(404).json({ message: "Placed student not found" });
-    res.json({ message: "Placed student deleted successfully" });
+    const student = await PlacedStudent.findById(req.params.id);
+    if (!student)
+      return res.status(404).json({ message: "Student not found" });
+
+    if (student.image?.public_id) {
+      await cloudinary.uploader.destroy(student.image.public_id);
+    }
+
+    await student.deleteOne();
+    res.status(200).json({ message: "Deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Failed to delete student" });
+  }
+};
+
+// ✅ Update placed student (optional)
+export const updatePlacedStudent = async (req, res) => {
+  try {
+    const student = await PlacedStudent.findById(req.params.id);
+    if (!student)
+      return res.status(404).json({ message: "Student not found" });
+
+    const {
+      name,
+      registerNumber,
+      branch,
+      yearOfPassing,
+      companyName,
+      location,
+      packageOffered,
+      designation,
+    } = req.body;
+
+    // If new image uploaded, replace old
+    if (req.file) {
+      if (student.image?.public_id) {
+        await cloudinary.uploader.destroy(student.image.public_id);
+      }
+
+      const upload = await cloudinary.uploader.upload(req.file.path, {
+        folder: "kpt_placed_students",
+      });
+
+      fs.unlinkSync(req.file.path);
+      student.image = { public_id: upload.public_id, url: upload.secure_url };
+    }
+
+    // Update text fields
+    student.name = name || student.name;
+    student.registerNumber = registerNumber || student.registerNumber;
+    student.branch = branch || student.branch;
+    student.yearOfPassing = yearOfPassing || student.yearOfPassing;
+    student.companyName = companyName || student.companyName;
+    student.location = location || student.location;
+    student.packageOffered = packageOffered || student.packageOffered;
+    student.designation = designation || student.designation;
+
+    await student.save();
+    res.status(200).json(student);
+  } catch (err) {
+    console.error("Error updating student:", err);
+    res.status(500).json({ message: "Failed to update student" });
   }
 };

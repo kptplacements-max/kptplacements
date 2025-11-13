@@ -2,16 +2,24 @@ import mongoose from "mongoose";
 
 const companyExpenseSchema = new mongoose.Schema(
   {
+    // 🟢 Now optional
     company: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "VisitedCompany",
-      required: true,
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "VisitedCompany",
+  default: null,
+  required: false,
+},
+
+
+    // 🟢 New field for "OTHER" category
+    otherCategory: {
+      type: String,
+      default: null,
     },
+
     submittedBy: { type: String, required: true },
 
-    initialAmount: { type: Number, default: 5000 },
     totalAmount: { type: Number, default: 0 },
-    availableBalance: { type: Number, default: 5000 },
 
     items: [
       {
@@ -22,28 +30,23 @@ const companyExpenseSchema = new mongoose.Schema(
 
     approvedByOfficer: { type: Boolean, default: false },
     approvedByPrincipal: { type: Boolean, default: false },
-    approvalRemarks: { type: String },
 
     status: {
       type: String,
       enum: ["Pending", "Officer Approved", "Principal Approved", "Rejected"],
       default: "Pending",
     },
-
-    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
 
-// Auto calculate total & balance before save
+// Auto calculate total before save
 companyExpenseSchema.pre("save", function (next) {
   this.totalAmount = this.items.reduce(
     (sum, item) => sum + (item.amount || 0),
     0
   );
-  this.availableBalance = (this.initialAmount || 0) - this.totalAmount;
 
-  // Update status dynamically
   if (this.approvedByPrincipal) this.status = "Principal Approved";
   else if (this.approvedByOfficer) this.status = "Officer Approved";
   else this.status = "Pending";
