@@ -13,11 +13,13 @@ export default function AdminLayout({ children }) {
   const role = user?.publicMetadata?.role;
 
   // Allow only these 3 roles
-  if (
-    role !== "principal" &&
-    role !== "placement-coordinator" &&
-    role !== "placement-officer"
-  ) {
+ if (
+  role !== "principal" &&
+  role !== "placement-coordinator" &&
+  role !== "placement-officer" &&
+  role !== "sw-officer"
+)
+{
     return (
       <main className="flex items-center justify-center min-h-screen bg-red-50 text-red-700">
         <p className="text-lg font-semibold">🚫 Admin access only.</p>
@@ -141,6 +143,20 @@ export default function AdminLayout({ children }) {
     </Link>
   </>
 )}
+{/* -------------------------------------------------- */}
+{/* SW-OFFICER MENU */}
+{/* -------------------------------------------------- */}
+{role === "sw-officer" && (
+  <>
+    <Link
+      href="/admin/swOfficerExpenses"
+      className={linkClass("/admin/swOfficerExpenses")}
+    >
+      SW Officer – Review Expenses
+    </Link>
+  </>
+)}
+
 
         </nav>
       </aside>

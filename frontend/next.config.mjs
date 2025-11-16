@@ -1,16 +1,18 @@
+import withPWA from "next-pwa";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ✅ Disable Turbopack completely (uses Webpack instead)
+  // Disable Turbopack
   experimental: {
     turbo: false,
   },
 
-  // ✅ Fix Emotion (used internally by MUI) SSR + CSS issues
+  // Fix Emotion (MUI)
   compiler: {
     emotion: true,
   },
 
-  // ✅ Allow Cloudinary-hosted images to render properly
+  // Allow Cloudinary images
   images: {
     remotePatterns: [
       {
@@ -21,8 +23,13 @@ const nextConfig = {
     ],
   },
 
-  // ✅ Enable React strict mode (safe for MUI + Next 16)
   reactStrictMode: true,
 };
 
-export default nextConfig;
+// Wrap with PWA
+export default withPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development", // Disable PWA during dev
+})(nextConfig);

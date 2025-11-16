@@ -1,10 +1,12 @@
 import CompanyExpense from "../models/companyExpenseModel.js";
 import VisitedCompany from "../models/visitedCompanyModel.js";
+import Budget from "../models/budgetModel.js"; // ensure this exists
 
-// ✅ Add expense entry for a company
+// Create expense
 export const createExpense = async (req, res) => {
   try {
-    console.log("Received expense body:", req.body);   // 🔥 ADD THIS LOG
+    // server log for debugging
+    console.log("Received expense body:", req.body);
 
     const payload = { ...req.body };
 
@@ -22,53 +24,163 @@ export const createExpense = async (req, res) => {
 
     res.status(201).json(expense);
   } catch (error) {
-    console.log("EXPENSE ERROR:", error);  // 🔥 ADD THIS
+    console.error("EXPENSE ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-
-
-// ✅ Get all expenses (optionally filter by company)
+// Get all expenses with role-based filtering + optional flags
+// ROLE-BASED EXPENSE FILTERING
 export const getAllExpenses = async (req, res) => {
   try {
-    const filter = req.query.company ? { company: req.query.company } : {};
+    const { role, user } = req.query;
+    let filter = {};
+
+    // 1️⃣ Coordinator → only their own expenses
+    if (role === "placement-coordinator") {
+      filter.submittedBy = user;
+    }
+
+    // 2️⃣ Officer → expenses pending officer approval
+    if (role === "placement-officer") {
+      filter.approvedByOfficer = false;
+    }
+
+    // 3️⃣ SW-Officer → officer approved, but SW not approved
+    if (role === "sw-officer") {
+      filter.approvedByOfficer = true;
+      filter.approvedBySWOfficer = false;
+    }
+
+    // 4️⃣ Principal → officer + SW approved, principal not approved
+    if (role === "principal") {
+      filter.approvedByOfficer = true;
+      filter.approvedBySWOfficer = true;
+      filter.approvedByPrincipal = false;
+    }
+
+    // ⭐ FIX: SW-approved list must be filtered correctly
+    if (req.query.approvedBySWOfficer === "true") {
+      filter.approvedBySWOfficer = true;
+      filter.approvedByOfficer = true; // <-- IMPORTANT FIX
+    }
+
     const data = await CompanyExpense.find(filter)
       .populate("company", "companyName location visitDate")
       .sort({ createdAt: -1 });
+
     res.json(data);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Approve or update expense
+
+// Update / Approve / Partial update
 export const updateExpense = async (req, res) => {
   try {
-    const updated = await CompanyExpense.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
+    const expense = await CompanyExpense.findById(req.params.id);
+    if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+    // keep previous SW flag to detect transitions
+    const prevApprovedBySW = expense.approvedBySWOfficer === true;
+    const prevTotalAmount = expense.totalAmount || 0;
+
+    // If company changed, remove old relation (we'll re-add later if necessary)
+    if (req.body.company && req.body.company !== expense.company?.toString()) {
+      if (expense.company) {
+        await VisitedCompany.findByIdAndUpdate(expense.company, {
+          $pull: { expenses: expense._id },
+        });
       }
-    );
-    res.json(updated);
+    }
+
+    // Apply incoming fields to expense
+    Object.assign(expense, req.body);
+    await expense.save(); // runs pre("save") hook to update totalAmount & status
+
+    // Add to new company
+    if (expense.company) {
+      await VisitedCompany.findByIdAndUpdate(expense.company, {
+        $push: { expenses: expense._id },
+      });
+    }
+
+    // ===== Budget adjustment logic =====
+    // Only when SW-officer approves (transition from false -> true) we deduct budget.
+    // Also handle revert: if someone sets approvedBySWOfficer from true -> false and _swUsed was true, refund.
+    const budget = await Budget.findOne();
+
+    // 1) SW approval granted now (and wasn't earlier)
+    if (req.body.approvedBySWOfficer === true && !prevApprovedBySW) {
+      // if not already counted
+      if (!expense._swUsed) {
+        if (budget) {
+          budget.totalUsed = Number(budget.totalUsed || 0) + Number(expense.totalAmount || 0);
+          budget.remaining = Number(budget.totalBudget || 0) - Number(budget.totalUsed || 0);
+          await budget.save();
+        }
+        expense._swUsed = true;
+        await expense.save();
+      }
+    }
+
+    // 2) SW approval reverted (was true, now false) -> rollback budget if it was applied
+    if (req.body.approvedBySWOfficer === false && prevApprovedBySW) {
+      if (expense._swUsed && budget) {
+        budget.totalUsed = Number(budget.totalUsed || 0) - Number(expense.totalAmount || 0);
+        if (budget.totalUsed < 0) budget.totalUsed = 0;
+        budget.remaining = Number(budget.totalBudget || 0) - Number(budget.totalUsed || 0);
+        await budget.save();
+      }
+      expense._swUsed = false;
+      await expense.save();
+    }
+
+    // Edge case: if totalAmount changed after SW applied, adjust budget delta
+    // (only if _swUsed true)
+    if (expense._swUsed && prevTotalAmount !== expense.totalAmount && budget) {
+      const delta = Number(expense.totalAmount || 0) - Number(prevTotalAmount || 0);
+      budget.totalUsed = Number(budget.totalUsed || 0) + delta;
+      if (budget.totalUsed < 0) budget.totalUsed = 0;
+      budget.remaining = Number(budget.totalBudget || 0) - Number(budget.totalUsed || 0);
+      await budget.save();
+    }
+
+    res.json(expense);
   } catch (error) {
+    console.error("UPDATE EXPENSE ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// ✅ Delete expense record
+// Delete expense (refund budget if needed)
 export const deleteExpense = async (req, res) => {
   try {
     const deleted = await CompanyExpense.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Expense not found" });
-    await VisitedCompany.findByIdAndUpdate(deleted.company, {
-      $pull: { expenses: deleted._id },
-    });
+
+    // remove from visited company relation
+    if (deleted.company) {
+      await VisitedCompany.findByIdAndUpdate(deleted.company, {
+        $pull: { expenses: deleted._id },
+      });
+    }
+
+    // refund budget if SW approval was already applied
+    if (deleted._swUsed) {
+      const budget = await Budget.findOne();
+      if (budget) {
+        budget.totalUsed = Number(budget.totalUsed || 0) - Number(deleted.totalAmount || 0);
+        if (budget.totalUsed < 0) budget.totalUsed = 0;
+        budget.remaining = Number(budget.totalBudget || 0) - Number(budget.totalUsed || 0);
+        await budget.save();
+      }
+    }
+
     res.json({ message: "Expense deleted successfully" });
   } catch (error) {
+    console.error("DELETE EXPENSE ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };

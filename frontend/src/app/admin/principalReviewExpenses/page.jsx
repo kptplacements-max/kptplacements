@@ -26,7 +26,8 @@ export default function PrincipalReviewExpenses() {
 
   async function loadExpenses() {
     try {
-      const res = await axios.get(`${API}/api/company-expenses`);
+      const res =await axios.get(`${API}/api/company-expenses?role=principal`);
+
       setExpenses(res.data);
     } catch (err) {
       alert("Failed to fetch expenses");

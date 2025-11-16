@@ -12,18 +12,20 @@ import placedStudentRoutes from "./src/routes/placedStudentRoutes.js";
 import teamRoutes from "./src/routes/teamRoutes.js";
 import announcementRoutes from "./src/routes/announcementRoutes.js";
 import recruiterLogoRoutes from "./src/routes/recruiterLogoRoutes.js";
-import companyExpenseRoutes from "./src/routes/companyExpenseRoutes.js";   // ✅ ADD THIS
-import budgetRoutes from "./src/routes/budgetRoutes.js";   // ⭐ ADD THIS
+import companyExpenseRoutes from "./src/routes/companyExpenseRoutes.js";
+import budgetRoutes from "./src/routes/budgetRoutes.js";
 import budgetUsageRoutes from "./src/routes/budgetUsageRoutes.js";
+import galleryRoutes from "./src/routes/galleryRoutes.js";
+
 // Connect DB
-connectDB();
+await connectDB();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => res.send("KPT Placement API Running ✅"));
+app.get("/", (req, res) => res.send("KPT Placement API Running on Vercel 🚀"));
 
 // Routes
 app.use("/api/placements", placementRoutes);
@@ -34,9 +36,12 @@ app.use("/api/team", teamRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/recruiter-logos", recruiterLogoRoutes);
 app.use("/api/home-hero", homeHeroRoutes);
-app.use("/api/company-expenses", companyExpenseRoutes); // ✅ FIX HERE
-app.use("/api/budget", budgetRoutes);   // ⭐ ADD THIS
+app.use("/api/company-expenses", companyExpenseRoutes);
+app.use("/api/budget", budgetRoutes);
 app.use("/api/budget-usage", budgetUsageRoutes);
-// Server start
+app.use("/api/gallery", galleryRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+export default app;

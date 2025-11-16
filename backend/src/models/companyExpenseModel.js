@@ -2,16 +2,13 @@ import mongoose from "mongoose";
 
 const companyExpenseSchema = new mongoose.Schema(
   {
-    // 🟢 Now optional
     company: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "VisitedCompany",
-  default: null,
-  required: false,
-},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "VisitedCompany",
+      default: null,
+      required: false,
+    },
 
-
-    // 🟢 New field for "OTHER" category
     otherCategory: {
       type: String,
       default: null,
@@ -29,11 +26,21 @@ const companyExpenseSchema = new mongoose.Schema(
     ],
 
     approvedByOfficer: { type: Boolean, default: false },
+
+    // ⭐ ADD THIS (missing field)
+    approvedBySWOfficer: { type: Boolean, default: false },
+
     approvedByPrincipal: { type: Boolean, default: false },
 
     status: {
       type: String,
-      enum: ["Pending", "Officer Approved", "Principal Approved", "Rejected"],
+      enum: [
+        "Pending",
+        "Officer Approved",
+        "SW Officer Approved",
+        "Principal Approved",
+        "Rejected",
+      ],
       default: "Pending",
     },
   },
@@ -48,6 +55,7 @@ companyExpenseSchema.pre("save", function (next) {
   );
 
   if (this.approvedByPrincipal) this.status = "Principal Approved";
+  else if (this.approvedBySWOfficer) this.status = "SW Officer Approved";
   else if (this.approvedByOfficer) this.status = "Officer Approved";
   else this.status = "Pending";
 

@@ -9,6 +9,7 @@ import AnnouncementsCarousel from "./components/AnnouncementsCarousel";
 import TopRecruiters from "./components/TopRecruiters";
 import RecruiterCTA from "./components/RecruiterCTA";
 import AboutSection from "./components/AboutSection";
+import GalleryPage from "./gallery/page";
 
 export default function Home() {
   const [heroImages, setHeroImages] = useState([]);
@@ -129,6 +130,7 @@ export default function Home() {
       <AboutSection />
       <AnnouncementsCarousel />
       <TopRecruiters />
+      <GalleryPage />
       <RecruiterCTA />
     </>
   );

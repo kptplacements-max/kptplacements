@@ -9,20 +9,26 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function AddExpensesPage() {
   const { user, isLoaded } = useUser();
+
   const [companies, setCompanies] = useState([]);
   const [companyId, setCompanyId] = useState("");
   const [otherCategory, setOtherCategory] = useState("");
   const [items, setItems] = useState([{ description: "", amount: "" }]);
 
-  // ⭐ For viewing/editing/deleting submitted expenses
   const [myExpenses, setMyExpenses] = useState([]);
   const [editing, setEditing] = useState(null);
+
+  const [budgetInfo, setBudgetInfo] = useState({
+    totalBudget: 0,
+    totalUsed: 0,
+    remaining: 0,
+  });
 
   if (!isLoaded) return <div>Loading...</div>;
 
   const role = user?.publicMetadata?.role;
   const currentUser =
-    user.fullName || user.firstName || user.username || "Unknown User";
+    user.fullName || user.firstName || user.username || "Placement office";
 
   if (role !== "placement-coordinator") {
     return (
@@ -31,26 +37,21 @@ export default function AddExpensesPage() {
       </div>
     );
   }
-const [budgetInfo, setBudgetInfo] = useState({
-  totalBudget: 0,
-  totalUsed: 0,
-  remaining: 0,
-});
 
-// Load budget usage
-useEffect(() => {
-  async function loadBudgetUsage() {
-    try {
-      const res = await axios.get(`${API}/api/budget-usage`);
-      setBudgetInfo(res.data);
-    } catch (err) {
-      console.error(err);
+  // Load budget usage
+  useEffect(() => {
+    async function loadBudgetUsage() {
+      try {
+        const res = await axios.get(`${API}/api/budget-usage`);
+        setBudgetInfo(res.data);
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }
-  loadBudgetUsage();
-}, []);
+    loadBudgetUsage();
+  }, []);
 
-  // FETCH COMPANIES
+  // Fetch companies
   useEffect(() => {
     async function loadCompanies() {
       try {
@@ -64,11 +65,12 @@ useEffect(() => {
     loadCompanies();
   }, []);
 
-  // FETCH MY EXPENSES
+  // Fetch my expenses
   useEffect(() => {
     async function loadExpenses() {
       try {
-        const res = await axios.get(`${API}/api/company-expenses`);
+        const res = await axios.get(`${API}/api/company-expenses?role=placement-coordinator&user=${currentUser}`);
+
         setMyExpenses(res.data.filter((e) => e.submittedBy === currentUser));
       } catch (err) {
         console.error(err);
@@ -126,7 +128,6 @@ useEffect(() => {
     }
   }
 
-  // DELETE EXPENSE
   async function deleteExpense(id) {
     if (!confirm("Delete this expense?")) return;
 
@@ -139,7 +140,6 @@ useEffect(() => {
     }
   }
 
-  // SAVE UPDATED EXPENSE
   async function saveEdit() {
     try {
       await axios.put(`${API}/api/company-expenses/${editing._id}`, {
@@ -147,7 +147,6 @@ useEffect(() => {
       });
 
       alert("Updated!");
-
       setEditing(null);
 
       const res = await axios.get(`${API}/api/company-expenses`);
@@ -159,24 +158,12 @@ useEffect(() => {
   }
 
   return (
-    <div className="p-6">
-        {/* Remaining Budget Box */}
-<div className="mb-6 p-4 bg-blue-100 border border-blue-300 rounded">
-  <h3 className="font-bold text-lg text-blue-800">Budget Overview</h3>
-  <p className="text-gray-700">
-    <strong>Total Budget:</strong> ₹{budgetInfo.totalBudget}
-  </p>
-  <p className="text-gray-700">
-    <strong>Used:</strong> ₹{budgetInfo.totalUsed}
-  </p>
-  <p className="text-green-700 font-bold">
-    <strong>Remaining:</strong> ₹{budgetInfo.remaining}
-  </p>
-</div>
+    <div className="p-6 max-w-5xl mx-auto">
 
-      {/* ------------------------ */}
-      {/* ADD EXPENSE SECTION */}
-      {/* ------------------------ */}
+      {/* ========================== */}
+      {/* ADD EXPENSE FORM */}
+      {/* ========================== */}
+
       <h2 className="text-3xl font-bold mb-6">Add Placement Expenses</h2>
 
       <div className="mb-4">
@@ -192,7 +179,6 @@ useEffect(() => {
               {c.companyName} ({c.location})
             </option>
           ))}
-
           <option value="other">Other Expense (Not a Company)</option>
         </select>
       </div>
@@ -250,57 +236,108 @@ useEffect(() => {
         Submit Expenses
       </button>
 
-      {/* ------------------------------------ */}
-      {/* SEE MY SUBMITTED EXPENSES SECTION    */}
-      {/* ------------------------------------ */}
-      <h2 className="text-2xl font-bold mt-10 mb-4">My Submitted Expenses</h2>
+      {/* ========================== */}
+      {/* MY EXPENSES TABLE */}
+      {/* ========================== */}
 
-      {myExpenses.length === 0 && (
+      <h2 className="text-2xl font-bold mt-12 mb-4">My Submitted Expenses</h2>
+{/* ========================== */}
+{/*     ⭐ BUDGET OVERVIEW      */}
+{/* ========================== */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-16 mb-10">
+
+  <div className="bg-white rounded-xl shadow-md p-5 border-l-4 border-blue-600">
+    <p className="text-gray-500 text-sm">Total Budget</p>
+    <h3 className="text-2xl font-bold text-blue-700">
+      ₹{budgetInfo.totalBudget}
+    </h3>
+  </div>
+
+  <div className="bg-white rounded-xl shadow-md p-5 border-l-4 border-red-600">
+    <p className="text-gray-500 text-sm">Used Budget</p>
+    <h3 className="text-2xl font-bold text-red-700">
+      ₹{budgetInfo.totalUsed}
+    </h3>
+  </div>
+
+  <div className="bg-white rounded-xl shadow-md p-5 border-l-4 border-green-600">
+    <p className="text-gray-500 text-sm">Remaining Budget</p>
+    <h3 className="text-2xl font-bold text-green-700">
+      ₹{budgetInfo.remaining}
+    </h3>
+  </div>
+
+</div>
+
+      {myExpenses.length === 0 ? (
         <p className="text-gray-500">No expenses submitted.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="p-3 text-left">Company / Category</th>
+                <th className="p-3 text-left">Items</th>
+                <th className="p-3 text-left">Total Amount</th>
+                <th className="p-3 text-left">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {myExpenses.map((exp) => {
+                const total = exp.items.reduce((sum, i) => sum + i.amount, 0);
+
+                return (
+                  <tr key={exp._id} className="border-b hover:bg-gray-50">
+                    <td className="p-3 font-medium">
+                      {exp.company
+                        ? `${exp.company.companyName} (${exp.company.location})`
+                        : `Other: ${exp.otherCategory}`}
+                    </td>
+
+                    <td className="p-3">
+                      <ul className="list-disc ml-5">
+                        {exp.items.map((i, idx) => (
+                          <li key={idx}>
+                            {i.description} — ₹{i.amount}
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+
+                    <td className="p-3 font-bold text-blue-700">₹{total}</td>
+
+                    <td className="p-3 flex gap-2">
+                      <button
+                        onClick={() =>
+                          setEditing({
+                            ...exp,
+                            items: exp.items.map((i) => ({ ...i })),
+                          })
+                        }
+                        className="bg-yellow-500 text-white px-3 py-1 rounded"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => deleteExpense(exp._id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <div className="space-y-4">
-        {myExpenses.map((exp) => (
-          <div key={exp._id} className="border p-4 rounded bg-white shadow">
-            <p className="font-semibold">
-              {exp.company
-                ? `${exp.company.companyName} (${exp.company.location})`
-                : `Other: ${exp.otherCategory}`}
-            </p>
-
-            <ul className="list-disc ml-5 my-2">
-              {exp.items.map((i, idx) => (
-                <li key={idx}>
-                  {i.description} — ₹{i.amount}
-                </li>
-              ))}
-            </ul>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() =>
-                  setEditing({
-                    ...exp,
-                    items: exp.items.map((i) => ({ ...i })),
-                  })
-                }
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => deleteExpense(exp._id)}
-                className="bg-red-600 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
+      {/* ====================== */}
       {/* EDIT MODAL */}
+      {/* ====================== */}
       {editing && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-5 rounded shadow-xl w-[500px]">
