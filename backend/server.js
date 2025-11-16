@@ -17,17 +17,21 @@ import budgetRoutes from "./src/routes/budgetRoutes.js";
 import budgetUsageRoutes from "./src/routes/budgetUsageRoutes.js";
 import galleryRoutes from "./src/routes/galleryRoutes.js";
 
-// Connect DB
+// -------------------- CONNECT DATABASE --------------------
 await connectDB();
 
+// -------------------- INIT APP --------------------
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => res.send("KPT Placement API Running on Vercel 🚀"));
+// -------------------- BASE ROUTE --------------------
+app.get("/", (req, res) => {
+  res.send("KPT Placement API Running ✅");
+});
 
-// Routes
+// -------------------- API ROUTES --------------------
 app.use("/api/placements", placementRoutes);
 app.use("/api/placed-students", placedStudentRoutes);
 app.use("/api/visited-companies", visitedCompanyRoutes);
@@ -41,7 +45,5 @@ app.use("/api/budget", budgetRoutes);
 app.use("/api/budget-usage", budgetUsageRoutes);
 app.use("/api/gallery", galleryRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
+// -------------------- REQUIRED BY VERCEL --------------------
 export default app;
