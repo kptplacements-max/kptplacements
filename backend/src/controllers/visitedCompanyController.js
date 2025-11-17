@@ -1,17 +1,18 @@
 import VisitedCompany from "../models/visitedCompanyModel.js";
 import cloudinary from "../config/cloudinary.js";
-import CompanyExpense from "../models/companyExpenseModel.js";
 
 // ========================================================
-//  CREATE COMPANY VISIT (Cloudinary upload)
+//  CREATE COMPANY
 // ========================================================
 export const createVisitedCompany = async (req, res) => {
   try {
-    let imageUrl = "";
+    let uploadedImage = "";
 
     if (req.file) {
-      // CloudinaryStorage already uploads image
-      imageUrl = req.file.path; // secure_url
+      const upload = await cloudinary.uploader.upload(req.file.path, {
+        folder: "kpt_placements/visited_companies",
+      });
+      uploadedImage = upload.secure_url;
     }
 
     const company = await VisitedCompany.create({
@@ -19,7 +20,7 @@ export const createVisitedCompany = async (req, res) => {
       branchList: Array.isArray(req.body.branchList)
         ? req.body.branchList
         : [req.body.branchList],
-      imageUrl,
+      imageUrl: uploadedImage,
     });
 
     res.status(201).json(company);
@@ -34,35 +35,20 @@ export const createVisitedCompany = async (req, res) => {
 // ========================================================
 export const getAllVisitedCompanies = async (req, res) => {
   try {
-    let companies = await VisitedCompany.find()
-      .populate("expenses")
-      .sort({ createdAt: -1 });
-
-    const cleanCompanies = companies.map((c) => ({
-      ...c._doc,
-      branchList: Array.isArray(c.branchList) ? c.branchList : [],
-      visitDate: c.visitDate ? c.visitDate : new Date(),
-      location: c.location || "",
-      companyName: c.companyName || "",
-      packageOffered: c.packageOffered || 0,
-      studentsRecruited: c.studentsRecruited || 0,
-    }));
-
-    return res.json(cleanCompanies);
+    const companies = await VisitedCompany.find().sort({ createdAt: -1 });
+    res.json(companies);
   } catch (err) {
     console.error("Error in GET all companies:", err);
-    res.status(500).json({ message: "Failed to load visited companies" });
+    res.status(500).json({ message: "Failed to load companies" });
   }
 };
 
 // ========================================================
-//  GET SINGLE COMPANY
+//  GET COMPANY BY ID
 // ========================================================
 export const getVisitedCompanyById = async (req, res) => {
   try {
-    const company = await VisitedCompany.findById(req.params.id).populate(
-      "expenses"
-    );
+    const company = await VisitedCompany.findById(req.params.id);
     if (!company)
       return res.status(404).json({ message: "Company not found" });
 
@@ -73,7 +59,7 @@ export const getVisitedCompanyById = async (req, res) => {
 };
 
 // ========================================================
-//  UPDATE COMPANY (Cloudinary upload)
+//  UPDATE COMPANY
 // ========================================================
 export const updateVisitedCompany = async (req, res) => {
   try {
@@ -81,24 +67,27 @@ export const updateVisitedCompany = async (req, res) => {
     if (!company)
       return res.status(404).json({ message: "Company not found" });
 
+    // If new file uploaded → upload to cloudinary
     if (req.file) {
-      // Replace the old Cloudinary image (optional)
-      const newImage = req.file.path; // secure_url
-      company.imageUrl = newImage;
+      const upload = await cloudinary.uploader.upload(req.file.path, {
+        folder: "kpt_placements/visited_companies",
+      });
+
+      company.imageUrl = upload.secure_url;
     }
 
     Object.assign(company, req.body);
-
     const updated = await company.save();
+
     res.json(updated);
   } catch (err) {
-    console.error("Error updating visited company:", err);
+    console.error("Error updating company:", err);
     res.status(500).json({ message: "Failed to update company" });
   }
 };
 
 // ========================================================
-//  DELETE COMPANY (Cloudinary included)
+//  DELETE COMPANY
 // ========================================================
 export const deleteVisitedCompany = async (req, res) => {
   try {
@@ -106,21 +95,18 @@ export const deleteVisitedCompany = async (req, res) => {
     if (!company)
       return res.status(404).json({ message: "Company not found" });
 
-    // Remove cloudinary image
+    // Delete cloudinary image
     if (company.imageUrl) {
-      const publicId = company.imageUrl
-        .split("/")
-        .pop()
-        .split(".")[0];
-
+      const publicId = company.imageUrl.split("/").slice(-1)[0].split(".")[0];
       await cloudinary.uploader.destroy(
-        `kpt_visited_companies/${publicId}`
+        `kpt_placements/visited_companies/${publicId}`
       );
     }
 
     await company.deleteOne();
     res.json({ message: "Company deleted successfully" });
   } catch (err) {
+    console.error("Delete error:", err);
     res.status(500).json({ message: "Failed to delete company" });
   }
 };
