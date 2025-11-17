@@ -4,24 +4,21 @@ import cloudinary from "../config/cloudinary.js";
 // ✅ Upload hero image
 export const uploadHeroImage = async (req, res) => {
   try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ message: "No image uploaded" });
+    if (!req.file) return res.status(400).json({ message: "Image required" });
 
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: "kpt_home_hero",
+    const img = await HomeHero.create({
+      image: {
+        url: req.file.path,
+        public_id: req.file.filename,
+      },
     });
 
-    const newImage = new HomeHero({
-      image: { public_id: result.public_id, url: result.secure_url },
-    });
-
-    await newImage.save();
-    res.status(201).json(newImage);
-  } catch (error) {
-    console.error("Error uploading hero image:", error);
-    res.status(500).json({ message: "Failed to upload hero image" });
+    res.status(201).json(img);
+  } catch {
+    res.status(500).json({ message: "Failed to upload" });
   }
 };
+
 
 // ✅ Get all hero images
 export const getHeroImages = async (req, res) => {

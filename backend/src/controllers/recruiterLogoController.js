@@ -4,28 +4,22 @@ import cloudinary from "../config/cloudinary.js";
 // ✅ Create Recruiter Logo
 export const createRecruiterLogo = async (req, res) => {
   try {
-    const { name } = req.body;
-    const file = req.file;
+    if (!req.file) return res.status(400).json({ message: "Image required" });
 
-    if (!name) return res.status(400).json({ message: "Name required" });
-    if (!file) return res.status(400).json({ message: "Image required" });
-
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: "kpt_recruiter_logos",
+    const logo = await RecruiterLogo.create({
+      name: req.body.name,
+      image: {
+        url: req.file.path,
+        public_id: req.file.filename,
+      },
     });
 
-    const recruiterLogo = new RecruiterLogo({
-      name,
-      image: { public_id: result.public_id, url: result.secure_url },
-    });
-
-    await recruiterLogo.save();
-    res.status(201).json(recruiterLogo);
-  } catch (error) {
-    console.error(error);
+    res.status(201).json(logo);
+  } catch {
     res.status(500).json({ message: "Failed to create recruiter logo" });
   }
 };
+
 
 // ✅ Get All Recruiter Logos
 export const getRecruiterLogos = async (req, res) => {
@@ -54,36 +48,26 @@ export const deleteRecruiterLogo = async (req, res) => {
   }
 };
 // ✅ Update Recruiter Logo
+
 export const updateRecruiterLogo = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name } = req.body;
+    const logo = await RecruiterLogo.findById(req.params.id);
+    if (!logo) return res.status(404).json({ message: "Not found" });
 
-    const logo = await RecruiterLogo.findById(id);
-    if (!logo) return res.status(404).json({ message: "Logo not found" });
-
-    // If a new image is uploaded, replace the old one
     if (req.file) {
-      // Delete old image from Cloudinary
-      if (logo.image?.public_id) {
-        await cloudinary.uploader.destroy(logo.image.public_id);
-      }
+      await cloudinary.uploader.destroy(logo.image.public_id);
 
-      // Upload new image
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "kpt_recruiter_logos",
-      });
-
-      logo.image = { public_id: result.public_id, url: result.secure_url };
+      logo.image = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
     }
 
-    // Update name (if changed)
-    if (name) logo.name = name;
+    if (req.body.name) logo.name = req.body.name;
 
     await logo.save();
-    res.status(200).json({ message: "Logo updated successfully", logo });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to update recruiter logo" });
+    res.json(logo);
+  } catch {
+    res.status(500).json({ message: "Failed to update logo" });
   }
 };

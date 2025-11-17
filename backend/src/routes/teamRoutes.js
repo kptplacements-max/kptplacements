@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import storage from "../config/cloudinaryStorage.js";
+
 import {
   createMember,
   getMembers,
@@ -9,12 +11,8 @@ import {
 } from "../controllers/teamController.js";
 
 const router = express.Router();
-
-// Multer setup
-const storage = multer.diskStorage({});
 const upload = multer({ storage });
 
-// Routes
 router.post("/", upload.single("image"), createMember);
 router.get("/", getMembers);
 router.get("/:id", getMemberById);

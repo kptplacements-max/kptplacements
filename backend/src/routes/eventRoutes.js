@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import storage from "../config/cloudinaryStorage.js";
+
 import {
   createEvent,
   getEvents,
@@ -9,12 +11,8 @@ import {
 } from "../controllers/eventController.js";
 
 const router = express.Router();
-
-// Setup multer for image upload
-const storage = multer.diskStorage({});
 const upload = multer({ storage });
 
-// Routes
 router.post("/", upload.single("image"), createEvent);
 router.get("/", getEvents);
 router.get("/:id", getEventById);

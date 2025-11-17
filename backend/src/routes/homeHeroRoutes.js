@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import storage from "../config/cloudinaryStorage.js";
+
 import {
   uploadHeroImage,
   getHeroImages,
@@ -7,7 +9,6 @@ import {
 } from "../controllers/homeHeroController.js";
 
 const router = express.Router();
-const storage = multer.diskStorage({});
 const upload = multer({ storage });
 
 router.post("/", upload.single("image"), uploadHeroImage);
