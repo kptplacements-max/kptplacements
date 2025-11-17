@@ -1,5 +1,8 @@
 import express from "express";
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
+
 import {
   createVisitedCompany,
   getAllVisitedCompanies,
@@ -10,8 +13,18 @@ import {
 
 const router = express.Router();
 
-// Multer config
-const upload = multer({ dest: "uploads/" });
+// ------------------------------
+// Cloudinary Storage for Multer
+// ------------------------------
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "kpt_placements/visited_companies",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+  },
+});
+
+const upload = multer({ storage });
 
 // ======================================
 // IMPORTANT: GET ROUTES COME FIRST

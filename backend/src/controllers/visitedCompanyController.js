@@ -1,34 +1,26 @@
 import VisitedCompany from "../models/visitedCompanyModel.js";
 import cloudinary from "../config/cloudinary.js";
-import fs from "fs";
 import CompanyExpense from "../models/companyExpenseModel.js";
 
-
 // ========================================================
-//  CREATE COMPANY VISIT (with image upload)
+//  CREATE COMPANY VISIT (Cloudinary upload)
 // ========================================================
 export const createVisitedCompany = async (req, res) => {
   try {
     let imageUrl = "";
 
-    // Upload new image if provided
     if (req.file) {
-      const upload = await cloudinary.uploader.upload(req.file.path, {
-        folder: "kpt_visited_companies",
-      });
-
-      fs.unlinkSync(req.file.path);
-      imageUrl = upload.secure_url;
+      // CloudinaryStorage already uploads image
+      imageUrl = req.file.path; // secure_url
     }
 
-   const company = await VisitedCompany.create({
-  ...req.body,
-  branchList: Array.isArray(req.body.branchList)
-    ? req.body.branchList
-    : [req.body.branchList],
-  imageUrl,
-});
-
+    const company = await VisitedCompany.create({
+      ...req.body,
+      branchList: Array.isArray(req.body.branchList)
+        ? req.body.branchList
+        : [req.body.branchList],
+      imageUrl,
+    });
 
     res.status(201).json(company);
   } catch (err) {
@@ -40,16 +32,12 @@ export const createVisitedCompany = async (req, res) => {
 // ========================================================
 //  GET ALL COMPANIES
 // ========================================================
-// ========================================================
-//  GET ALL COMPANIES (SAFE VERSION - NO CRASH)
-// ========================================================
 export const getAllVisitedCompanies = async (req, res) => {
   try {
     let companies = await VisitedCompany.find()
       .populate("expenses")
       .sort({ createdAt: -1 });
 
-    // FIX BROKEN DATA FROM OLD ENTRIES
     const cleanCompanies = companies.map((c) => ({
       ...c._doc,
       branchList: Array.isArray(c.branchList) ? c.branchList : [],
@@ -85,7 +73,7 @@ export const getVisitedCompanyById = async (req, res) => {
 };
 
 // ========================================================
-//  UPDATE COMPANY (with optional new image)
+//  UPDATE COMPANY (Cloudinary upload)
 // ========================================================
 export const updateVisitedCompany = async (req, res) => {
   try {
@@ -93,17 +81,12 @@ export const updateVisitedCompany = async (req, res) => {
     if (!company)
       return res.status(404).json({ message: "Company not found" });
 
-    // Upload new image if provided
     if (req.file) {
-      const upload = await cloudinary.uploader.upload(req.file.path, {
-        folder: "kpt_visited_companies",
-      });
-
-      fs.unlinkSync(req.file.path);
-      company.imageUrl = upload.secure_url;
+      // Replace the old Cloudinary image (optional)
+      const newImage = req.file.path; // secure_url
+      company.imageUrl = newImage;
     }
 
-    // Update text values
     Object.assign(company, req.body);
 
     const updated = await company.save();
@@ -115,7 +98,7 @@ export const updateVisitedCompany = async (req, res) => {
 };
 
 // ========================================================
-//  DELETE COMPANY (also delete image if stored in Cloudinary)
+//  DELETE COMPANY (Cloudinary included)
 // ========================================================
 export const deleteVisitedCompany = async (req, res) => {
   try {
@@ -123,10 +106,16 @@ export const deleteVisitedCompany = async (req, res) => {
     if (!company)
       return res.status(404).json({ message: "Company not found" });
 
-    // ❌ Remove image from Cloudinary (optional – only if needed)
+    // Remove cloudinary image
     if (company.imageUrl) {
-      const publicId = company.imageUrl.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(`kpt_visited_companies/${publicId}`);
+      const publicId = company.imageUrl
+        .split("/")
+        .pop()
+        .split(".")[0];
+
+      await cloudinary.uploader.destroy(
+        `kpt_visited_companies/${publicId}`
+      );
     }
 
     await company.deleteOne();
