@@ -1,4 +1,3 @@
-//server.js
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
@@ -46,5 +45,12 @@ app.use("/api/budget", budgetRoutes);
 app.use("/api/budget-usage", budgetUsageRoutes);
 app.use("/api/gallery", galleryRoutes);
 
-// -------------------- REQUIRED BY VERCEL --------------------
+// -------------------- START SERVER --------------------
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
+// Required for Vercel (ignored in local)
 export default app;

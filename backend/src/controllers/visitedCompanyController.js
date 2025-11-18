@@ -1,6 +1,7 @@
 import VisitedCompany from "../models/visitedCompanyModel.js";
 import cloudinary from "../config/cloudinary.js";
 
+// CREATE
 export const createVisitedCompany = async (req, res) => {
   try {
     const imageData = req.file
@@ -24,6 +25,31 @@ export const createVisitedCompany = async (req, res) => {
   }
 };
 
+// READ ALL
+export const getAllVisitedCompanies = async (req, res) => {
+  try {
+    const companies = await VisitedCompany.find().populate("expenses");
+    res.json(companies);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch companies" });
+  }
+};
+
+// READ ONE
+export const getVisitedCompanyById = async (req, res) => {
+  try {
+    const company = await VisitedCompany.findById(req.params.id).populate(
+      "expenses"
+    );
+    if (!company) return res.status(404).json({ message: "Not found" });
+
+    res.json(company);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch company" });
+  }
+};
+
+// UPDATE
 export const updateVisitedCompany = async (req, res) => {
   try {
     const company = await VisitedCompany.findById(req.params.id);
@@ -48,6 +74,7 @@ export const updateVisitedCompany = async (req, res) => {
   }
 };
 
+// DELETE
 export const deleteVisitedCompany = async (req, res) => {
   try {
     const company = await VisitedCompany.findById(req.params.id);

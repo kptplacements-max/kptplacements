@@ -5,10 +5,23 @@ import { getAllPlacementYears } from "./api";
 
 export default function PlacementStatsPage() {
   const [stats, setStats] = useState([]);
+useEffect(() => {
+  getAllPlacementYears().then((data) => {
+    if (!data || !Array.isArray(data)) {
+      setStats([]);
+      return;
+    }
 
-  useEffect(() => {
-    getAllPlacementYears().then((data) => setStats(data || []));
-  }, []);
+    // AUTO FILTER YEARS < 2026
+    const filtered = data.filter((item) => Number(item.year) < 2026);
+
+    // AUTO SORT LATEST FIRST
+    const sorted = filtered.sort((a, b) => b.year - a.year);
+
+    setStats(sorted);
+  });
+}, []);
+
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-16 px-4 md:px-8">
@@ -27,7 +40,7 @@ export default function PlacementStatsPage() {
 
           <table className="min-w-full text-sm border border-gray-300 rounded-lg shadow-md overflow-hidden">
             <thead className="sticky top-0 z-10">
-              {/* --- Main Header Row --- */}
+              {/* --- HEADER ROW --- */}
               <tr className="text-white text-sm">
                 <th className="bg-blue-900 p-2 border text-center">Sl. No.</th>
                 <th className="bg-blue-900 p-2 border text-center">Program</th>
@@ -40,17 +53,11 @@ export default function PlacementStatsPage() {
                   Total Students Passed
                 </th>
 
-                <th
-                  colSpan="3"
-                  className="bg-emerald-700 p-2 border text-center"
-                >
+                <th colSpan="3" className="bg-emerald-700 p-2 border text-center">
                   Total Students Placed
                 </th>
 
-                <th
-                  colSpan="3"
-                  className="bg-indigo-700 p-2 border text-center"
-                >
+                <th colSpan="3" className="bg-indigo-700 p-2 border text-center">
                   Opted for Higher Studies
                 </th>
 
@@ -62,47 +69,24 @@ export default function PlacementStatsPage() {
                   Entrepreneurs
                 </th>
 
-                <th
-                  colSpan="3"
-                  className="bg-purple-700 p-2 border text-center"
-                >
+                <th colSpan="3" className="bg-purple-700 p-2 border text-center">
                   % Placement
                 </th>
               </tr>
 
-              {/* --- Sub-header Row --- */}
+              {/* --- SUB HEADER --- */}
               <tr className="bg-gray-100 text-gray-800 font-semibold text-xs uppercase tracking-wide">
                 <th className="border p-1"></th>
                 <th className="border p-1"></th>
 
                 {[
-                  // Total Student Strength (3)
-                  "Male",
-                  "Female",
-                  "Total",
-                  // Total Students Passed (3)
-                  "Male",
-                  "Female",
-                  "Total",
-                  // Total Students Placed (3)
-                  "Male",
-                  "Female",
-                  "Total",
-                  // Opted for Higher Studies (3)
-                  "Male",
-                  "Female",
-                  "Total",
-                  // Dropouts / Backlogs (3)
-                  "Male",
-                  "Female",
-                  "Total",
-                  // Entrepreneurs (2)
-                  "Male",
-                  "Female",
-                  // % Placement (3)
-                  "Male",
-                  "Female",
-                  "Total",
+                  "Male", "Female", "Total",
+                  "Male", "Female", "Total",
+                  "Male", "Female", "Total",
+                  "Male", "Female", "Total",
+                  "Male", "Female", "Total",
+                  "Male", "Female",
+                  "Male", "Female", "Total"
                 ].map((h, idx) => (
                   <th key={idx} className="border p-1 bg-gray-50 text-gray-700">
                     {h}
@@ -113,142 +97,112 @@ export default function PlacementStatsPage() {
 
             <tbody>
               {yearData.programs.map((p, i) => {
-                // Safe numeric conversions
-                const male = Number(p.male ?? 0);
-                const female = Number(p.female ?? 0);
-                const total = Number(p.total ?? male + female);
+                const getNum = (val) => Number(val ?? 0);
 
-                const passedMale = Number(p.passedMale ?? 0);
-                const passedFemale = Number(p.passedFemale ?? 0);
-                const passedTotal = Number(
-                  p.passedTotal ?? passedMale + passedFemale
-                );
+                const male = getNum(p.male);
+                const female = getNum(p.female);
+                const total = getNum(p.total || male + female);
 
-                const placedMale = Number(p.placedMale ?? 0);
-                const placedFemale = Number(p.placedFemale ?? 0);
-                const placedTotal = Number(
-                  p.placedTotal ?? placedMale + placedFemale
-                );
+                const passedMale = getNum(p.passedMale);
+                const passedFemale = getNum(p.passedFemale);
+                const passedTotal = getNum(p.passedTotal);
 
-                const higherMale = Number(p.higherMale ?? 0);
-                const higherFemale = Number(p.higherFemale ?? 0);
-                const higherTotal = Number(
-                  p.higherTotal ?? higherMale + higherFemale
-                );
+                const placedMale = getNum(p.placedMale);
+                const placedFemale = getNum(p.placedFemale);
+                const placedTotal = getNum(p.placedTotal);
 
-                const dropoutMale = Number(p.dropoutMale ?? 0);
-                const dropoutFemale = Number(p.dropoutFemale ?? 0);
-                const dropoutTotal = Number(
-                  p.dropoutTotal ?? dropoutMale + dropoutFemale
-                );
+                const higherMale = getNum(p.higherMale);
+                const higherFemale = getNum(p.higherFemale);
+                const higherTotal = getNum(p.higherTotal);
 
-                const entrepreneurMale = Number(p.entrepreneurMale ?? 0);
-                const entrepreneurFemale = Number(p.entrepreneurFemale ?? 0);
+                const dropoutMale = getNum(p.dropoutMale);
+                const dropoutFemale = getNum(p.dropoutFemale);
+                const dropoutTotal = getNum(p.dropoutTotal);
 
-                const pctMale = Number(p.percentageMale ?? 0);
-                const pctFemale = Number(p.percentageFemale ?? 0);
-                const pctTotal = Number(
-                  p.percentageTotal ?? (placedTotal / (total || 1)) * 100
-                );
+                const entrepreneurMale = getNum(p.entrepreneurMale);
+                const entrepreneurFemale = getNum(p.entrepreneurFemale);
+
+                const pctMale = Number(getNum(p.percentageMale).toFixed(2));
+                const pctFemale = Number(getNum(p.percentageFemale).toFixed(2));
+                const pctTotal = Number(getNum(p.percentageTotal).toFixed(2));
 
                 return (
                   <tr
                     key={i}
-                    className={`text-center text-gray-700 ${
+                    className={`text-center ${
                       i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50 transition`}
+                    } hover:bg-blue-50`}
                   >
-                    <td className="border p-2 font-medium">{i + 1}</td>
+                    <td className="border p-2">{i + 1}</td>
                     <td className="border p-2 font-semibold text-blue-700">
                       {p.program}
                     </td>
 
-                    {/* 🩵 Total Student Strength */}
+                    {/* Strength */}
                     <td className="border p-2 bg-sky-100">{male}</td>
                     <td className="border p-2 bg-sky-100">{female}</td>
                     <td className="border p-2 bg-sky-100">{total}</td>
 
-                    {/* 💚 Total Students Passed */}
+                    {/* Passed */}
                     <td className="border p-2 bg-pink-100">{passedMale}</td>
                     <td className="border p-2 bg-pink-100">{passedFemale}</td>
                     <td className="border p-2 bg-pink-100">{passedTotal}</td>
 
-                    {/* 🟩 Total Students Placed */}
+                    {/* Placed */}
                     <td className="border p-2 bg-emerald-100">{placedMale}</td>
-                    <td className="border p-2 bg-emerald-100">
-                      {placedFemale}
-                    </td>
+                    <td className="border p-2 bg-emerald-100">{placedFemale}</td>
                     <td className="border p-2 bg-emerald-100">{placedTotal}</td>
 
-                    {/* 🟣 Opted for Higher Studies */}
+                    {/* Higher Studies */}
                     <td className="border p-2 bg-indigo-100">{higherMale}</td>
                     <td className="border p-2 bg-indigo-100">{higherFemale}</td>
                     <td className="border p-2 bg-indigo-100">{higherTotal}</td>
 
-                    {/* ❤️ Dropouts / Backlogs */}
+                    {/* Dropout */}
                     <td className="border p-2 bg-red-100">{dropoutMale}</td>
                     <td className="border p-2 bg-red-100">{dropoutFemale}</td>
                     <td className="border p-2 bg-red-100">{dropoutTotal}</td>
 
-                    {/* 🟠 Entrepreneurs */}
-                    <td className="border p-2 bg-amber-100">
-                      {entrepreneurMale}
-                    </td>
-                    <td className="border p-2 bg-amber-100">
-                      {entrepreneurFemale}
-                    </td>
+                    {/* Entrepreneurs */}
+                    <td className="border p-2 bg-amber-100">{entrepreneurMale}</td>
+                    <td className="border p-2 bg-amber-100">{entrepreneurFemale}</td>
 
-                    {/* 💜 % Placement */}
-                    <td className="border p-2 bg-purple-100 text-emerald-700 font-semibold">
-                      {pctMale.toFixed(2)}
-                    </td>
-                    <td className="border p-2 bg-purple-100 text-emerald-700 font-semibold">
-                      {pctFemale.toFixed(2)}
-                    </td>
-                    <td className="border p-2 bg-purple-100 text-emerald-700 font-semibold">
-                      {pctTotal.toFixed(2)}
-                    </td>
+                    {/* % Placement */}
+                    <td className="border p-2 bg-purple-100">{pctMale}%</td>
+                    <td className="border p-2 bg-purple-100">{pctFemale}%</td>
+                    <td className="border p-2 bg-purple-100">{pctTotal}%</td>
                   </tr>
                 );
               })}
 
-              {/* Totals Row */}
+              {/* TOTAL ROW */}
               <tr className="bg-blue-100 font-semibold text-gray-800">
-                <td className="border p-2" colSpan="2">
-                  Total
-                </td>
+                <td className="border p-2" colSpan="2">Total</td>
 
-                {/* Total Students */}
                 <td className="border p-2 bg-sky-200" colSpan="3">
                   {yearData.totalStudents ?? 0}
                 </td>
 
-                {/* Total Passed */}
                 <td className="border p-2 bg-pink-200" colSpan="3">
                   {yearData.totalPassed ?? 0}
                 </td>
 
-                {/* Total Placed */}
                 <td className="border p-2 bg-emerald-200" colSpan="3">
                   {yearData.totalPlaced ?? 0}
                 </td>
 
-                {/* Higher Studies */}
                 <td className="border p-2 bg-indigo-200" colSpan="3">
                   {yearData.totalHigherStudies ?? 0}
                 </td>
 
-                {/* Dropouts */}
                 <td className="border p-2 bg-red-200" colSpan="3">
                   {yearData.totalDropouts ?? 0}
                 </td>
 
-                {/* Entrepreneurs */}
                 <td className="border p-2 bg-amber-200" colSpan="2">
                   {yearData.totalEntrepreneurs ?? 0}
                 </td>
 
-                {/* Overall % */}
                 <td className="border p-2 bg-purple-200" colSpan="3">
                   {(yearData.overallPercentage ?? 0).toFixed(2)}%
                 </td>

@@ -9,17 +9,16 @@ const recalcTotals = (placement) => {
   let totalEntrepreneurs = 0;
 
   placement.programs.forEach((p) => {
-    // Per-program derived fields
     p.passedTotal = p.passedMale + p.passedFemale;
     p.placedTotal = p.placedMale + p.placedFemale;
     p.higherTotal = p.higherMale + p.higherFemale;
     p.dropoutTotal = p.dropoutMale + p.dropoutFemale;
 
-    p.percentageTotal = p.total
-      ? ((p.placedTotal / p.total) * 100).toFixed(2)
-      : 0;
+    p.percentageTotal =
+      p.total > 0
+        ? Number(((p.placedTotal / p.total) * 100).toFixed(2))
+        : 0;
 
-    // Yearly totals
     totalStudents += p.total;
     totalPassed += p.passedTotal;
     totalPlaced += p.placedTotal;
@@ -33,9 +32,10 @@ const recalcTotals = (placement) => {
   placement.totalHigherStudies = totalHigher;
   placement.totalEntrepreneurs = totalEntrepreneurs;
 
-  placement.overallPercentage = totalStudents
-    ? ((totalPlaced / totalStudents) * 100).toFixed(2)
-    : 0;
+  placement.overallPercentage =
+    totalStudents > 0
+      ? Number(((totalPlaced / totalStudents) * 100).toFixed(2))
+      : 0;
 
   return placement;
 };
