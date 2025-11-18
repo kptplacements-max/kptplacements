@@ -1,7 +1,7 @@
-import dotenv from "dotenv";
-dotenv.config();
-import cors from "cors";
+// server.js
+import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import connectDB from "./src/config/db.js";
 
 import homeHeroRoutes from "./src/routes/homeHeroRoutes.js";
@@ -17,21 +17,56 @@ import budgetRoutes from "./src/routes/budgetRoutes.js";
 import budgetUsageRoutes from "./src/routes/budgetUsageRoutes.js";
 import galleryRoutes from "./src/routes/galleryRoutes.js";
 
-// -------------------- CONNECT DATABASE --------------------
+// ---------------------- INITIAL CONFIG ----------------------
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// ---------------------- CONNECT DATABASE ----------------------
 await connectDB();
 
-// -------------------- INIT APP --------------------
-const app = express();
-app.use(cors());
+// ---------------------- CORS CONFIG ----------------------
+const allowedOrigins = [
+  "http://localhost:5173",
+  // 👉 Change this to your actual frontend URL when deployed
+  "https://kpt-placement-frontend.vercel.app",
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
+
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// ---------------------- MIDDLEWARES ----------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// -------------------- BASE ROUTE --------------------
+// ---------------------- BASE ROUTE ----------------------
 app.get("/", (req, res) => {
   res.send("KPT Placement API Running ✅");
 });
 
-// -------------------- API ROUTES --------------------
+// ---------------------- API ROUTES ----------------------
+app.use("/api/home-hero", homeHeroRoutes);
 app.use("/api/placements", placementRoutes);
 app.use("/api/placed-students", placedStudentRoutes);
 app.use("/api/visited-companies", visitedCompanyRoutes);
@@ -39,18 +74,15 @@ app.use("/api/events", eventRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/recruiter-logos", recruiterLogoRoutes);
-app.use("/api/home-hero", homeHeroRoutes);
 app.use("/api/company-expenses", companyExpenseRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/budget-usage", budgetUsageRoutes);
 app.use("/api/gallery", galleryRoutes);
 
-// -------------------- START SERVER --------------------
-const PORT = process.env.PORT || 5000;
-
+// ---------------------- SERVER ----------------------
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// Required for Vercel (ignored in local)
+// ✅ Required export for Vercel deployment
 export default app;

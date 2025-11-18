@@ -7,7 +7,12 @@ const visitedCompanySchema = new mongoose.Schema(
     location: { type: String, required: true },
     packageOffered: { type: Number, required: true },
     visitDate: { type: Date, required: true },
-    imageUrl: { type: String },
+
+    image: {
+      url: { type: String },
+      public_id: { type: String },
+    },
+
     studentsRecruited: { type: Number, default: 0 },
 
     modeOfVisit: {
