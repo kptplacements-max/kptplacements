@@ -122,13 +122,13 @@ export default function RecentlyVisitedCompanies() {
               {/* Image Section */}
               <div
                 className="h-48 w-full overflow-hidden cursor-pointer"
-                onClick={() => setSelectedImage(c.image?.url)} // FIXED
+                onClick={() => setSelectedImage(c.image?.url)}
               >
                 <img
                   src={
                     c.image?.url ||
                     "https://via.placeholder.com/400x250.png?text=No+Image"
-                  } // FIXED
+                  }
                   alt={c.companyName}
                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -189,24 +189,26 @@ export default function RecentlyVisitedCompanies() {
       {/* Image Modal */}
       {selectedImage && (
         <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-white/50 flex items-center justify-center z-50 p-2 sm:p-4"
           onClick={() => setSelectedImage(null)}
         >
           <div
-            className="relative max-w-4xl w-[90%] rounded-lg overflow-hidden"
+            className="relative w-auto max-w-[95vw] max-h-[95vh] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
             <button
-              className="absolute top-3 right-3 bg-white/80 hover:bg-white text-black p-2 rounded-full shadow-md"
+              className="absolute top-2 right-2 bg-white text-black p-2 rounded-full shadow-lg hover:bg-gray-200 transition z-50"
               onClick={() => setSelectedImage(null)}
             >
               <X className="w-6 h-6" />
             </button>
 
+            {/* Image */}
             <img
               src={selectedImage}
-              alt="Enlarged"
-              className="w-full h-auto rounded-lg shadow-lg"
+              alt="Preview"
+              className="w-auto h-auto max-w-[95vw] max-h-[95vh] object-scale-down rounded-lg"
             />
           </div>
         </div>
