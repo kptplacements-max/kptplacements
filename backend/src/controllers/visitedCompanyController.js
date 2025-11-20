@@ -5,18 +5,19 @@ import cloudinary from "../config/cloudinary.js";
 function parseBranchList(input) {
   if (!input) return [];
 
-  // If JSON string → parse it
-  if (typeof input === "string") {
-    try {
-      const parsed = JSON.parse(input);
-      return Array.isArray(parsed) ? parsed : [parsed];
-    } catch {
-      return [input];
-    }
-  }
+  // If already array → return
+  if (Array.isArray(input)) return input;
 
-  // Already an array
-  return Array.isArray(input) ? input : [input];
+  // Clean all weird cases
+  let clean = String(input)
+    .replace(/[\[\]]/g, "")   // remove brackets
+    .replace(/"/g, "")        // remove double quotes
+    .replace(/'/g, "")        // remove single quotes
+    .trim();
+
+  if (!clean) return [];
+
+  return clean.split(",").map((b) => b.trim()).filter((b) => b.length > 0);
 }
 
 // CREATE
@@ -103,19 +104,19 @@ export const updateVisitedCompany = async (req, res) => {
     const company = await VisitedCompany.findById(req.params.id);
     if (!company) return res.status(404).json({ message: "Not found" });
 
-    // 🔥 Parse new branchList (if any)
+    // Branch list
     if (req.body.branchList) {
       company.branchList = parseBranchList(req.body.branchList);
     }
 
-    // 🔥 Parse numbers correctly
-    if (req.body.packageOffered)
+    // Numbers
+    if (req.body.packageOffered !== undefined)
       company.packageOffered = Number(req.body.packageOffered);
 
-    if (req.body.studentsRecruited)
+    if (req.body.studentsRecruited !== undefined)
       company.studentsRecruited = Number(req.body.studentsRecruited);
 
-    // 🔥 Parse date properly
+    // Date
     if (req.body.visitDate)
       company.visitDate = new Date(req.body.visitDate);
 
@@ -125,7 +126,7 @@ export const updateVisitedCompany = async (req, res) => {
     if (req.body.modeOfVisit) company.modeOfVisit = req.body.modeOfVisit;
     if (req.body.recruitmentType) company.recruitmentType = req.body.recruitmentType;
 
-    // 🔥 Handle image update
+    // Image
     if (req.file) {
       if (company.image?.public_id) {
         try {
@@ -143,8 +144,9 @@ export const updateVisitedCompany = async (req, res) => {
 
     await company.save();
     res.json(company);
+
   } catch (err) {
-    console.error(err);
+    console.error("UPDATE ERROR:", err);
     res.status(500).json({ message: "Failed to update company" });
   }
 };
