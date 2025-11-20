@@ -65,7 +65,11 @@ export default function PlacedStudentsManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
-    Object.keys(formData).forEach((key) => data.append(key, formData[key]));
+Object.keys(formData).forEach((key) => {
+  if (key === "image" && !formData.image) return; // ⛔ don't send null image
+  data.append(key, formData[key]);
+});
+
 
     try {
       setUploading(true);

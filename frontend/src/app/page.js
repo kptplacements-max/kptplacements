@@ -130,8 +130,9 @@ export default function Home() {
       <AboutSection />
       <AnnouncementsCarousel />
       <TopRecruiters />
-      <GalleryPage />
+      
       <RecruiterCTA />
+      <GalleryPage />
     </>
   );
 }

@@ -56,19 +56,30 @@ export const updatePlacedStudent = async (req, res) => {
     const student = await PlacedStudent.findById(req.params.id);
     if (!student) return res.status(404).json({ message: "Not found" });
 
+    // If new image uploaded → replace image
     if (req.file) {
-      await cloudinary.uploader.destroy(student.image.public_id);
+      if (student.image?.public_id) {
+        await cloudinary.uploader.destroy(student.image.public_id);
+      }
+
       student.image = {
         url: req.file.path,
         public_id: req.file.filename,
       };
     }
 
-    Object.assign(student, req.body);
-    await student.save();
+    // Update all other fields EXCEPT image
+    Object.keys(req.body).forEach((key) => {
+      if (key !== "image") {
+        student[key] = req.body[key];
+      }
+    });
 
+    await student.save();
     res.json(student);
-  } catch {
+
+  } catch (err) {
+    console.error("Update error:", err);
     res.status(500).json({ message: "Failed to update student" });
   }
 };
