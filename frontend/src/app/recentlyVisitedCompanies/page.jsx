@@ -17,7 +17,7 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 export default function RecentlyVisitedCompanies() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(null); // 👈 for modal
+  const [selectedImage, setSelectedImage] = useState(null);
   const [filters, setFilters] = useState({
     branch: "",
     company: "",
@@ -50,16 +50,19 @@ export default function RecentlyVisitedCompanies() {
         )
       )
         return false;
+
       if (
         filters.company &&
         !c.companyName.toLowerCase().includes(filters.company.toLowerCase())
       )
         return false;
+
       if (
         filters.location &&
         !c.location.toLowerCase().includes(filters.location.toLowerCase())
       )
         return false;
+
       return true;
     });
   }
@@ -70,7 +73,7 @@ export default function RecentlyVisitedCompanies() {
         🏢 Recently Visited Companies
       </h1>
 
-      {/* Filter Section */}
+      {/* Filters */}
       <div className="flex text-gray-500 flex-wrap justify-center gap-3 mb-10">
         <input
           placeholder="Branch"
@@ -92,7 +95,7 @@ export default function RecentlyVisitedCompanies() {
         />
         <button
           onClick={() =>
-            setFilters({ year: "", branch: "", company: "", location: "" })
+            setFilters({ branch: "", company: "", location: "" })
           }
           className="bg-blue-100 text-blue-700 font-medium px-4 py-2 rounded-md hover:bg-blue-200 transition"
         >
@@ -100,7 +103,7 @@ export default function RecentlyVisitedCompanies() {
         </button>
       </div>
 
-      {/* Cards Section */}
+      {/* Cards */}
       {loading ? (
         <div className="text-center text-blue-600 font-semibold text-lg">
           Loading companies...
@@ -119,19 +122,19 @@ export default function RecentlyVisitedCompanies() {
               {/* Image Section */}
               <div
                 className="h-48 w-full overflow-hidden cursor-pointer"
-                onClick={() => setSelectedImage(c.imageUrl)} // 👈 open modal
+                onClick={() => setSelectedImage(c.image?.url)} // FIXED
               >
                 <img
                   src={
-                    c.imageUrl ||
+                    c.image?.url ||
                     "https://via.placeholder.com/400x250.png?text=No+Image"
-                  }
+                  } // FIXED
                   alt={c.companyName}
                   className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
 
-              {/* Company Info */}
+              {/* Info */}
               <div className="p-5">
                 <h2 className="text-xl font-bold text-blue-900 mb-1">
                   {c.companyName.toUpperCase()}
@@ -183,7 +186,7 @@ export default function RecentlyVisitedCompanies() {
         </div>
       )}
 
-      {/* 🖼️ Image Modal */}
+      {/* Image Modal */}
       {selectedImage && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
@@ -191,7 +194,7 @@ export default function RecentlyVisitedCompanies() {
         >
           <div
             className="relative max-w-4xl w-[90%] rounded-lg overflow-hidden"
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               className="absolute top-3 right-3 bg-white/80 hover:bg-white text-black p-2 rounded-full shadow-md"
@@ -199,6 +202,7 @@ export default function RecentlyVisitedCompanies() {
             >
               <X className="w-6 h-6" />
             </button>
+
             <img
               src={selectedImage}
               alt="Enlarged"

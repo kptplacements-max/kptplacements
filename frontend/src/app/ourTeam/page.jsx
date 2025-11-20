@@ -19,64 +19,104 @@ export default function OurTeamPage() {
     fetchTeam();
   }, [baseURL]);
 
+  // ⭐ Categorize into tree levels
+  function sortToTree(list) {
+    const principal = list.filter(
+      (m) => m.designation?.toLowerCase() === "principal"
+    );
+    const tpo = list.filter((m) =>
+      m.designation?.toLowerCase().includes("training & placement")
+    );
+    const spc = list.filter((m) =>
+      m.designation?.toLowerCase().includes("coodenator") ||
+      m.designation?.toLowerCase().includes("coordinator")
+    );
+    return { principal, tpo, spc };
+  }
+
+  const tree = sortToTree(team);
+
   return (
     <section className="min-h-screen bg-white text-gray-900 py-16 px-6">
       <div className="max-w-7xl mx-auto text-center">
         <h1 className="text-4xl font-bold mb-2 text-blue-800">Our Team</h1>
         <p className="text-gray-600 mb-12">
-          Meet the dedicated members of the Training & Placement Cell who work
-          tirelessly to guide students toward successful careers.
+          Meet the dedicated members of the Training & Placement Cell.
         </p>
 
+        {/* ⭐ TREE CSS */}
+        <style>
+          {`
+            .tree { display: flex; flex-direction: column; align-items: center; }
+            .tree-level { display: flex; justify-content: center; gap: 40px; margin: 40px 0; }
+            .node { text-align: center; width: 180px; }
+            .node img {
+              width: 120px;
+              height: 120px;
+              object-fit: cover;
+              border-radius: 50%;
+              border: 3px solid #1e4db7;
+              margin: 0 auto;
+            }
+            .line-down {
+              width: 2px;
+              height: 35px;
+              background: #1e4db7;
+              margin: -10px auto 20px auto;
+            }
+          `}
+        </style>
+
         {team.length === 0 ? (
-          <p className="text-gray-500">No team members added yet.</p>
+          <p>No team members added yet.</p>
         ) : (
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
-            {team.map((member) => (
-              <div
-                key={member._id}
-                className="group relative bg-white border border-gray-200 shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300"
-              >
-                <div className="w-full h-56 bg-gray-100 overflow-hidden">
-                  <img
-                    src={member.image?.url || "/placeholder.jpg"}
-                    alt={member.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
+          <div className="tree">
 
-                <div className="p-4 text-center">
-                  <h3 className="text-lg font-semibold text-blue-800">
-                    {member.name}
-                  </h3>
-                  <p className="text-gray-700 text-sm mt-1">
-                    {member.designation}
-                  </p>
-                  <p className="text-gray-500 text-sm mt-1">
-                    {member.department}
-                  </p>
-
-                  <div className="mt-3 flex flex-col justify-center gap-4 text-sm text-gray-500">
-                    {member.email && (
-                      <a
-                        href={`mailto:${member.email}`}
-                        className="hover:text-blue-600"
-                      >
-                        📧 Email: {member.email}
-                      </a>
-                    )}
-                    {member.phone && (
-                      <a
-                        href={`tel:${member.phone}`}
-                        className="hover:text-blue-600"
-                      >
-                        📞 Call: {member.phone}
-                      </a>
-                    )}
-                  </div>
+            {/* === PRINCIPAL === */}
+            {tree.principal.length > 0 && (
+              <>
+                <div className="tree-level">
+                  {tree.principal.map((p) => (
+                    <div key={p._id} className="node">
+                      <img src={p.image?.url} alt={p.name} />
+                      <h3 className="font-bold text-blue-800 mt-2">{p.name}</h3>
+                      <p className="text-sm">{p.designation}</p>
+                      <p className="text-xs text-gray-500">{p.department}</p>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+                <div className="line-down"></div>
+              </>
+            )}
+
+            {/* === TPO === */}
+            {tree.tpo.length > 0 && (
+              <>
+                <div className="tree-level">
+                  {tree.tpo.map((t) => (
+                    <div key={t._id} className="node">
+                      <img src={t.image?.url} alt={t.name} />
+                      <h3 className="font-bold text-blue-800 mt-2">{t.name}</h3>
+                      <p className="text-sm">{t.designation}</p>
+                      <p className="text-xs text-gray-500">{t.department}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="line-down"></div>
+              </>
+            )}
+
+            {/* === STUDENT PLACEMENT COORDINATORS === */}
+            <div className="tree-level flex flex-wrap justify-center gap-10">
+              {tree.spc.map((s) => (
+                <div key={s._id} className="node">
+                  <img src={s.image?.url} alt={s.name} />
+                  <h3 className="font-semibold text-blue-800 mt-2">{s.name}</h3>
+                  <p className="text-sm">{s.designation}</p>
+                  <p className="text-xs text-gray-500">{s.department}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
