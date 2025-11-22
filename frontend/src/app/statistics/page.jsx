@@ -12,11 +12,11 @@ useEffect(() => {
       return;
     }
 
-    // AUTO FILTER YEARS < 2026
-    const filtered = data.filter((item) => Number(item.year) < 2026);
+    // 🔥 Show only PUBLIC years (Admin visibility toggle)
+    const visibleYears = data.filter((item) => item.isPublic === true);
 
-    // AUTO SORT LATEST FIRST
-    const sorted = filtered.sort((a, b) => b.year - a.year);
+    // 🔥 Sort descending → latest first
+    const sorted = visibleYears.sort((a, b) => b.year - a.year);
 
     setStats(sorted);
   });

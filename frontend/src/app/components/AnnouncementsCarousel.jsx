@@ -31,13 +31,19 @@ export default function AnnouncementsCarousel() {
 
         <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-3">
           {announcements.map((a) => (
-            <div
+            <Link
               key={a._id}
-              className="flex-none w-72 bg-white rounded-xl shadow hover:shadow-md transition-transform hover:-translate-y-1 border border-gray-100 p-5"
+              href="/announcements"
+              className="
+                flex-none w-72 bg-white rounded-xl shadow 
+                hover:shadow-lg transition-transform hover:-translate-y-1
+                border border-gray-100 p-5 cursor-pointer
+              "
             >
               <h3 className="font-semibold text-lg text-blue-700 mb-2 line-clamp-2">
                 {a.title}
               </h3>
+
               <p className="text-sm text-gray-500 mb-1">
                 {new Date(a.date).toLocaleDateString("en-IN", {
                   day: "numeric",
@@ -45,19 +51,15 @@ export default function AnnouncementsCarousel() {
                   year: "numeric",
                 })}
               </p>
+
               <p className="text-sm text-gray-600 line-clamp-3 mb-3">
                 {a.description}
               </p>
-              {a.link && (
-                <Link
-                  href={a.link}
-                  target="_blank"
-                  className="text-sm font-medium text-blue-700 hover:underline"
-                >
-                  View Details →
-                </Link>
-              )}
-            </div>
+
+              <p className="text-sm font-medium text-blue-700 hover:underline">
+                View Announcement →
+              </p>
+            </Link>
           ))}
         </div>
       </div>

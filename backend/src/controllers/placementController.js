@@ -65,7 +65,7 @@ export const createPlacement = async (req, res) => {
 // ✅ READ all years
 export const getAllPlacements = async (req, res) => {
   try {
-    const data = await Placement.find().sort({ year: -1 });
+    const data = await Placement.find({ isPublic: true }).sort({ year: -1 }); // 👈 FILTER
     res.json(data);
   } catch (error) {
     res.status(500).json({ message: error.message });

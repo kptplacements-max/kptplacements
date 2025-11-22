@@ -1,11 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
 import axios from "axios";
+import { toast } from "react-toastify";
+import {
+  Box,
+  Card,
+  Grid,
+  Typography,
+  TextField,
+  Select,
+  MenuItem,
+  Avatar,
+  Button,
+  CircularProgress,
+  CardContent,
+  CardActions,
+  IconButton,
+} from "@mui/material";
+import { Add, Edit, Delete } from "@mui/icons-material";
+import { FaUpload } from "react-icons/fa";
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     category: "Other",
@@ -15,291 +36,331 @@ export default function AdminEventsPage() {
     targetAudience: "",
     image: null,
   });
-  const [editingId, setEditingId] = useState(null);
 
-  // ✅ Use correct backend API base URL
-  const baseURL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const [preview, setPreview] = useState(null);
 
-  // ✅ Fetch all events
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
   const fetchEvents = async () => {
     try {
+      setLoadingEvents(true);
       const res = await axios.get(`${baseURL}/api/events`);
-      setEvents(res.data);
-    } catch (err) {
-      console.error("Error fetching events:", err);
+      setEvents(res.data || []);
+    } catch {
+      toast.error("Failed to load events");
+    } finally {
+      setLoadingEvents(false);
     }
   };
 
   useEffect(() => {
     fetchEvents();
-  }, [baseURL]);
+  }, []);
 
-  // Handle input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
   const handleFileChange = (e) => {
-    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
+    const file = e.target.files?.[0] || null;
+    setFormData((p) => ({ ...p, image: file }));
+    setPreview(file ? URL.createObjectURL(file) : null);
   };
 
-  // ✅ Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.title || !formData.description || !formData.eventDate) {
+      return toast.error("Please fill required fields!");
+    }
 
     const data = new FormData();
-    Object.keys(formData).forEach((key) => {
-      if (formData[key]) data.append(key, formData[key]);
+    Object.entries(formData).forEach(([key, val]) => {
+      if (key === "image" && !val) return;
+      data.append(key, val);
     });
 
     try {
+      setSubmitting(true);
+
       if (editingId) {
         await axios.put(`${baseURL}/api/events/${editingId}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        toast.success("Event updated!");
+        toast.success("Event Updated!");
       } else {
+        if (!formData.image) return toast.error("Upload an image");
         await axios.post(`${baseURL}/api/events`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        toast.success("Event created!");
+        toast.success("Event Added!");
       }
 
-      // reset form
-      setFormData({
-        title: "",
-        category: "Other",
-        description: "",
-        eventDate: "",
-        conductedBy: "",
-        targetAudience: "",
-        image: null,
-      });
-      setEditingId(null);
+      resetForm();
       fetchEvents();
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Something went wrong while saving the event!");
+    } catch {
+      toast.error("Failed to save!");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Delete event
-  const handleDelete = async (id) => {
-    if (confirm("Delete this event?")) {
-      try {
-        await axios.delete(`${baseURL}/api/events/${id}`);
-        toast.info("Event deleted.");
-        fetchEvents();
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  };
-
-  // Load event into form for edit
-  const handleEdit = (event) => {
-    setEditingId(event._id);
+  const resetForm = () => {
+    setEditingId(null);
     setFormData({
-      title: event.title,
-      category: event.category,
-      description: event.description,
-      eventDate: event.eventDate.split("T")[0],
-      conductedBy: event.conductedBy,
-      targetAudience: event.targetAudience,
+      title: "",
+      category: "Other",
+      description: "",
+      eventDate: "",
+      conductedBy: "",
+      targetAudience: "",
       image: null,
     });
+    setPreview(null);
+  };
+
+  const handleEdit = (ev) => {
+    setEditingId(ev._id);
+    setFormData({
+      title: ev.title,
+      category: ev.category,
+      description: ev.description,
+      eventDate: ev.eventDate?.split("T")[0],
+      conductedBy: ev.conductedBy,
+      targetAudience: ev.targetAudience,
+      image: null,
+    });
+    setPreview(ev.image?.url || null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast.info(`Editing ${ev.title}`);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure?")) return;
+    try {
+      await axios.delete(`${baseURL}/api/events/${id}`);
+      toast.success("Event Deleted!");
+      fetchEvents();
+    } catch {
+      toast.error("Delete failed!");
+    }
   };
 
   return (
-    <div className="max-w-5xl text-gray-700 mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">
+    <Box sx={{ minHeight: "100vh", py: 6, px: 2, background: "#f5f8ff" }}>
+      <Typography variant="h4" mb={2} textAlign="center" fontWeight="bold">
         {editingId ? "Edit Event" : "Add New Event"}
-      </h1>
+      </Typography>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-4xl mx-auto bg-white shadow-md rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border border-gray-200"
-      >
-        {/* Title */}
-        <div className="flex flex-col">
-          <label htmlFor="title" className="text-gray-700 font-medium mb-1">
-            Event Title<span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            placeholder="e.g. Mock Interview Workshop"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
+      <Card sx={{ maxWidth: 900, mx: "auto", p: 4, mb: 6 }}>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2}>
+            {/* LEFT */}
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Event Title *"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    size="small"
+                  />
+                </Grid>
 
-        {/* Category */}
-        <div className="flex flex-col">
-          <label htmlFor="category" className="text-gray-700 font-medium mb-1">
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          >
-            {[
-              "Training",
-              "Workshop",
-              "Industry Visit",
-              "Placement Drive",
-              "Seminar",
-              "Guest Lecture",
-              "Other",
-            ].map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </div>
+                <Grid item xs={12} sm={6}>
+                  <Select
+                    fullWidth
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    size="small"
+                  >
+                    {[
+                      "Training",
+                      "Workshop",
+                      "Industry Visit",
+                      "Placement Drive",
+                      "Seminar",
+                      "Guest Lecture",
+                      "Other",
+                    ].map((item) => (
+                      <MenuItem key={item} value={item}>
+                        {item}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Grid>
 
-        {/* Date */}
-        <div className="flex flex-col">
-          <label htmlFor="eventDate" className="text-gray-700 font-medium mb-1">
-            Event Date<span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            id="eventDate"
-            name="eventDate"
-            value={formData.eventDate}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    type="date"
+                    fullWidth
+                    name="eventDate"
+                    value={formData.eventDate}
+                    onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                  />
+                </Grid>
 
-        {/* Conducted By */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="conductedBy"
-            className="text-gray-700 font-medium mb-1"
-          >
-            Conducted By
-          </label>
-          <input
-            type="text"
-            id="conductedBy"
-            name="conductedBy"
-            placeholder="e.g. Infosys Foundation"
-            value={formData.conductedBy}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Conducted By"
+                    name="conductedBy"
+                    fullWidth
+                    size="small"
+                    value={formData.conductedBy}
+                    onChange={handleChange}
+                  />
+                </Grid>
 
-        {/* Target Audience */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="targetAudience"
-            className="text-gray-700 font-medium mb-1"
-          >
-            Target Audience
-          </label>
-          <input
-            type="text"
-            id="targetAudience"
-            name="targetAudience"
-            placeholder="e.g. Final Year CS Students"
-            value={formData.targetAudience}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Target Audience"
+                    name="targetAudience"
+                    fullWidth
+                    size="small"
+                    value={formData.targetAudience}
+                    onChange={handleChange}
+                  />
+                </Grid>
 
-        {/* Image */}
-        <div className="flex flex-col">
-          <label htmlFor="image" className="text-gray-700 font-medium mb-1">
-            Event Image
-          </label>
-          <input
-            type="file"
-            id="image"
-            name="image"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+                {/* Description */}
+                <Grid item xs={12}>
+                  <TextField
+                    label="Description *"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    fullWidth
+                    multiline
+                    minRows={4}
+                    maxRows={10}
+                    size="small"
+                    sx={{ whiteSpace: "pre-wrap" }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-        {/* Description */}
-        <div className="flex flex-col col-span-full">
-          <label
-            htmlFor="description"
-            className="text-gray-700 font-medium mb-1"
-          >
-            Description<span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            placeholder="Enter a brief summary of the event..."
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          ></textarea>
-        </div>
-
-        {/* Submit Button */}
-        <div className="col-span-full flex justify-center mt-4">
-          <button
-            type="submit"
-            className="bg-blue-600 text-white font-medium px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition-all duration-200"
-          >
-            {editingId ? "Update Event" : "Create Event"}
-          </button>
-        </div>
-      </form>
-      <h2 className="text-xl font-semibold mb-2 mt-10">All Events</h2>
-      <div className="space-y-3">
-        {events.map((event) => (
-          <div
-            key={event._id}
-            className="flex items-center justify-between bg-white shadow p-3 rounded"
-          >
-            <div className="flex items-center gap-4">
-              <img
-                src={event.image?.url}
-                alt={event.title}
-                className="w-20 h-16 object-cover rounded"
+            {/* RIGHT */}
+            <Grid
+              item
+              xs={12}
+              md={4}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              gap={2}
+            >
+              <Avatar
+                src={preview || ""}
+                variant="rounded"
+                sx={{
+                  width: "100%",
+                  height: 140,
+                  borderRadius: 2,
+                  border: "2px solid #1976d2",
+                  objectFit: "cover",
+                }}
               />
-              <div>
-                <h3 className="font-semibold">{event.title}</h3>
-                <p className="text-sm text-gray-500">
-                  {new Date(event.eventDate).toLocaleDateString()} |{" "}
-                  {event.category}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(event)}
-                className="bg-yellow-400 px-3 py-1 rounded"
+
+              <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                <FaUpload />
+                Upload Image OF EVENT
+                <input type="file" hidden accept="image/*" onChange={handleFileChange} />
+              </label>
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                color={editingId ? "warning" : "primary"}
+                startIcon={editingId ? <Edit /> : <Add />}
               >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(event._id)}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+                {submitting ? "Saving..." : editingId ? "Update Event" : "Create Event"}
+              </Button>
+
+              {editingId && (
+                <Button variant="text" fullWidth onClick={resetForm}>
+                  Cancel Edit
+                </Button>
+              )}
+            </Grid>
+          </Grid>
+        </form>
+      </Card>
+
+      {/* EVENTS LIST */}
+      <Box maxWidth="1000px" mx="auto">
+        <Typography variant="h6" mb={2}>
+          All Events
+        </Typography>
+
+        {loadingEvents ? (
+          <Box textAlign="center" mt={4}>
+            <CircularProgress />
+          </Box>
+        ) : events.length === 0 ? (
+          <Typography>No events found</Typography>
+        ) : (
+          <Grid container spacing={2}>
+            {events.map((ev) => (
+              <Grid item xs={12} key={ev._id}>
+                <Card sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" } }}>
+                  {/* IMAGE */}
+                  <img
+                    src={ev.image?.url}
+                    alt={ev.title}
+                    style={{
+                      width: 150,
+                      height: "100%",
+                      objectFit: "cover",
+                      borderTopLeftRadius: "8px",
+                      borderBottomLeftRadius: "8px",
+                    }}
+                  />
+
+                  {/* TEXT */}
+                  <Box sx={{ flex: 1 }}>
+                    <CardContent>
+                      <Typography fontWeight="bold">{ev.title}</Typography>
+                      <Typography variant="body2">
+                        {new Date(ev.eventDate).toLocaleDateString()} • {ev.category}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          mt: 1,
+                          whiteSpace: "pre-wrap",
+                          overflowWrap: "break-word",
+                          maxHeight: 120,
+                          overflowY: "auto",
+                        }}
+                      >
+                        {ev.description}
+                      </Typography>
+                    </CardContent>
+
+                    <CardActions sx={{ display: "flex", justifyContent: "flex-end", px: 2, pb: 2 }}>
+                      <IconButton onClick={() => handleEdit(ev)}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(ev._id)}>
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </CardActions>
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
+    </Box>
   );
 }

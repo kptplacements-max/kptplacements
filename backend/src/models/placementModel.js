@@ -41,15 +41,17 @@ const programSchema = new mongoose.Schema({
 const placementSchema = new mongoose.Schema(
   {
     year: { type: Number, required: true, unique: true },
+    isPublic: { type: Boolean, default: false }, // 👈 NEW FIELD
+    
     programs: [programSchema],
 
-    // Year-wise totals
-    totalStudents: { type: Number, default: 0 },
-    totalPassed: { type: Number, default: 0 },
-    totalPlaced: { type: Number, default: 0 },
-    totalHigherStudies: { type: Number, default: 0 },
-    totalEntrepreneurs: { type: Number, default: 0 },
-    overallPercentage: { type: Number, default: 0 },
+    totalStudents: Number,
+    totalPassed: Number,
+    totalPlaced: Number,
+    totalHigherStudies: Number,
+    totalDropouts: Number,
+    totalEntrepreneurs: Number,
+    overallPercentage: Number,
   },
   { timestamps: true }
 );
