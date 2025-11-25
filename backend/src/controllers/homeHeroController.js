@@ -46,3 +46,15 @@ export const deleteHeroImage = async (req, res) => {
     res.status(500).json({ message: "Failed to delete hero image" });
   }
 };
+export const updateHeroOrder = async (req, res) => {
+  try {
+    const { order } = req.body; // [{_id, order}, {_id, order}...]
+    const updatePromises = order.map((item) =>
+      HomeHero.findByIdAndUpdate(item._id, { order: item.order })
+    );
+    await Promise.all(updatePromises);
+    res.status(200).json({ message: "Order updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update order" });
+  }
+};

@@ -4,21 +4,37 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { FaTrash } from "react-icons/fa";
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 export default function AdminHomeHeroPage() {
   const [images, setImages] = useState([]);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
-  // ✅ Fetch all hero images
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  // Fetch images
   const fetchImages = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${baseURL}/api/home-hero`);
       setImages(res.data);
-    } catch (err) {
-      console.error("Error fetching hero images:", err);
+    } catch {
       toast.error("Failed to fetch images");
     } finally {
       setLoading(false);
@@ -29,10 +45,10 @@ export default function AdminHomeHeroPage() {
     fetchImages();
   }, []);
 
-  // ✅ Upload new hero image
+  // Upload image
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return toast.error("Please select an image");
+    if (!file) return toast.error("Select an image first");
 
     const formData = new FormData();
     formData.append("image", file);
@@ -40,38 +56,55 @@ export default function AdminHomeHeroPage() {
     try {
       setLoading(true);
       await axios.post(`${baseURL}/api/home-hero`, formData);
-      toast.success("Hero image uploaded successfully!");
+      toast.success("Image uploaded");
       setFile(null);
       setPreview(null);
       fetchImages();
-    } catch (err) {
-      toast.error("Failed to upload image");
+    } catch {
+      toast.error("Upload failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Delete hero image
+  // Delete image
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this image?")) return;
+    if (!confirm("Delete this image?")) return;
+
     try {
-      setLoading(true);
       await axios.delete(`${baseURL}/api/home-hero/${id}`);
-      toast.info("Image deleted");
-      fetchImages();
-    } catch (err) {
-      toast.error("Failed to delete image");
-    } finally {
-      setLoading(false);
+      toast.info("Deleted");
+      setImages(images.filter((x) => x._id !== id));
+    } catch {
+      toast.error("Failed to delete");
     }
   };
 
-  // ✅ File preview
-  const handleFileChange = (e) => {
-    const selected = e.target.files[0];
-    if (selected) {
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
+  // Drag+Drop reorder
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = images.findIndex((i) => i._id === active.id);
+    const newIndex = images.findIndex((i) => i._id === over.id);
+
+    const reordered = [...images];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    setImages(reordered);
+
+    const orderData = reordered.map((img, index) => ({
+      _id: img._id,
+      order: index,
+    }));
+
+    try {
+      await axios.put(`${baseURL}/api/home-hero/update-order`, {
+        order: orderData,
+      });
+      toast.success("Order updated");
+    } catch {
+      toast.error("Order save failed");
     }
   };
 
@@ -82,35 +115,32 @@ export default function AdminHomeHeroPage() {
           Manage Homepage Hero Images
         </h1>
 
-        {/* ✅ Upload Form */}
+        {/* Upload */}
         <form
           onSubmit={handleUpload}
-          className="bg-white border border-gray-200 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row items-center gap-4 mb-8"
+          className="bg-white border border-gray-200 p-6 rounded-2xl shadow-lg flex flex-col md:flex-row gap-4 mb-8"
         >
-          <div className="flex flex-col flex-1 w-full">
-            <label className="text-gray-600 font-medium mb-1">
-              Upload New Hero Image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="border rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none"
-            />
-          </div>
-
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              setFile(e.target.files[0]);
+              setPreview(URL.createObjectURL(e.target.files[0]));
+            }}
+            className="border rounded-lg px-3 py-2 w-full"
+          />
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-medium transition-all duration-300 mt-3 md:mt-8"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg"
           >
             {loading ? "Uploading..." : "Upload"}
           </button>
         </form>
 
-        {/* ✅ Preview Section */}
+        {/* Preview */}
         {preview && (
-          <div className="mb-8 flex justify-center">
+          <div className="flex justify-center mb-6">
             <div className="bg-white rounded-xl shadow-md p-3 border">
               <img
                 src={preview}
@@ -122,41 +152,60 @@ export default function AdminHomeHeroPage() {
           </div>
         )}
 
-        {/* ✅ Gallery Section */}
-        {loading ? (
-          <div className="text-center py-10 text-gray-500">
-            Loading images...
-          </div>
-        ) : images.length === 0 ? (
-          <p className="text-center text-gray-500 mt-10">
-            No hero images uploaded yet.
-          </p>
+        {/* Images List */}
+        {images.length === 0 ? (
+          <p className="text-center text-gray-500">No images yet</p>
         ) : (
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
-            {images.map((img) => (
-              <div
-                key={img._id}
-                className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition-transform duration-300 hover:scale-105 overflow-hidden"
-              >
-                <img
-                  src={img.image?.url}
-                  alt="Hero"
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 right-2">
-                  <button
-                    onClick={() => handleDelete(img._id)}
-                    className="bg-red-500 text-white p-2 rounded-full shadow hover:bg-red-600 transition"
-                    title="Delete Image"
-                  >
-                    <FaTrash size={14} />
-                  </button>
-                </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={images.map((i) => i._id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-6">
+                {images.map((img) => (
+                  <SortableItem
+                    key={img._id}
+                    img={img}
+                    handleDelete={handleDelete}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
+    </div>
+  );
+}
+
+// Sortable Item Component
+function SortableItem({ img, handleDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: img._id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className="relative bg-white rounded-2xl shadow-md hover:shadow-lg overflow-hidden cursor-grab"
+    >
+      <img src={img.image?.url} className="w-full h-48 object-cover" />
+
+      <button
+        onClick={() => handleDelete(img._id)}
+        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full shadow hover:bg-red-600"
+      >
+        <FaTrash size={14} />
+      </button>
     </div>
   );
 }

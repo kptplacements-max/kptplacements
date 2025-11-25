@@ -17,6 +17,7 @@ import { FaUpload } from "react-icons/fa";
 
 export default function PlacedStudentsManager() {
   const [students, setStudents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     registerNumber: "",
@@ -28,6 +29,7 @@ export default function PlacedStudentsManager() {
     designation: "",
     image: null,
   });
+
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +37,7 @@ export default function PlacedStudentsManager() {
 
   const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/placed-students`;
 
-  // ✅ Fetch students
+  // Fetch students
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -52,7 +54,22 @@ export default function PlacedStudentsManager() {
     fetchStudents();
   }, []);
 
-  // ✅ Handle file change
+  // Search Filter
+  const filteredStudents = students.filter((s) => {
+    const text = searchTerm.toLowerCase();
+    return (
+      s.name?.toLowerCase().includes(text) ||
+      s.registerNumber?.toLowerCase().includes(text) ||
+      s.branch?.toLowerCase().includes(text) ||
+      s.companyName?.toLowerCase().includes(text) ||
+      s.location?.toLowerCase().includes(text) ||
+      s.yearOfPassing?.toString().includes(text) ||
+      s.packageOffered?.toString().includes(text) ||
+      s.designation?.toLowerCase().includes(text)
+    );
+  });
+
+  // Handle file
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -61,25 +78,23 @@ export default function PlacedStudentsManager() {
     }
   };
 
-  // ✅ Handle submit (Add or Update)
+  // Submit (Add / Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
-Object.keys(formData).forEach((key) => {
-  if (key === "image" && !formData.image) return; // ⛔ don't send null image
-  data.append(key, formData[key]);
-});
 
+    Object.keys(formData).forEach((key) => {
+      if (key === "image" && !formData.image) return;
+      data.append(key, formData[key]);
+    });
 
     try {
       setUploading(true);
 
       if (editingId) {
-        // Update existing student
         await axios.put(`${API_URL}/${editingId}`, data);
         toast.success("Student updated successfully!");
       } else {
-        // Add new student
         if (!formData.image) return toast.error("Please upload an image");
         await axios.post(API_URL, data);
         toast.success("Placed student added successfully!");
@@ -106,7 +121,7 @@ Object.keys(formData).forEach((key) => {
     }
   };
 
-  // ✅ Delete student
+  // Delete
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this student?")) return;
     try {
@@ -118,7 +133,7 @@ Object.keys(formData).forEach((key) => {
     }
   };
 
-  // ✅ Edit student (populate form)
+  // Edit
   const handleEdit = (student) => {
     setFormData({
       name: student.name,
@@ -152,7 +167,7 @@ Object.keys(formData).forEach((key) => {
         </Typography>
       </Box>
 
-      {/* ✅ Add / Edit Form */}
+      {/* Form */}
       <Card
         sx={{
           maxWidth: 900,
@@ -198,7 +213,6 @@ Object.keys(formData).forEach((key) => {
               </Grid>
             </Grid>
 
-            {/* ✅ Right side - Image upload */}
             <Grid
               item
               xs={12}
@@ -206,8 +220,6 @@ Object.keys(formData).forEach((key) => {
               display="flex"
               flexDirection="column"
               alignItems="center"
-              justifyContent="center"
-              textAlign="center"
             >
               <Avatar
                 src={preview || ""}
@@ -222,12 +234,7 @@ Object.keys(formData).forEach((key) => {
               />
               <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition mb-3">
                 <FaUpload /> Upload Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={handleFileChange}
-                />
+                <input type="file" accept="image/*" hidden onChange={handleFileChange} />
               </label>
 
               <button
@@ -240,26 +247,34 @@ Object.keys(formData).forEach((key) => {
                 } text-white px-4 py-2 rounded-lg flex items-center gap-2 transition`}
               >
                 <Add fontSize="small" />
-                {uploading
-                  ? "Saving..."
-                  : editingId
-                  ? "Update Student"
-                  : "Add Student"}
+                {uploading ? "Saving..." : editingId ? "Update Student" : "Add Student"}
               </button>
             </Grid>
           </Grid>
         </form>
       </Card>
 
-      {/* ✅ Student Table */}
+      {/* 🔍 Search */}
+      <Box maxWidth="400px" mx="auto" mb={3}>
+        <TextField
+          fullWidth
+          label="Search Students..."
+          variant="outlined"
+          size="small"
+          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchTerm}
+        />
+      </Box>
+
+      {/* Table */}
       {loading ? (
         <Box textAlign="center" mt={5}>
           <CircularProgress />
           <Typography mt={2}>Loading Students...</Typography>
         </Box>
-      ) : students.length === 0 ? (
+      ) : filteredStudents.length === 0 ? (
         <Typography color="text.secondary" mt={3} textAlign="center">
-          No students added yet.
+          No students found.
         </Typography>
       ) : (
         <Box
@@ -289,7 +304,7 @@ Object.keys(formData).forEach((key) => {
               </tr>
             </thead>
             <tbody>
-              {students.map((s, i) => (
+              {filteredStudents.map((s, i) => (
                 <tr
                   key={s._id}
                   className={`hover:bg-blue-50 transition ${
