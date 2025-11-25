@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const HomeHeroSchema = new mongoose.Schema({
   image: {
-    public_id: { type: String },
-    url: { type: String },
+    public_id: String,
+    url: String,
   },
   order: {
     type: Number,
@@ -14,6 +14,5 @@ const HomeHeroSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
 
 export default mongoose.model("HomeHero", HomeHeroSchema);
