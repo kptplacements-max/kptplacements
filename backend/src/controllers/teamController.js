@@ -57,6 +57,7 @@ export const getMemberById = async (req, res) => {
 };
 
 // Update member
+// Update member
 export const updateMember = async (req, res) => {
   try {
     const { name, designation, department, email, phone } = req.body;
@@ -65,18 +66,33 @@ export const updateMember = async (req, res) => {
 
     if (!member) return res.status(404).json({ message: "Member not found" });
 
-    // Delete old image if new one uploaded
-    if (file && member.image?.public_id) {
-      await cloudinary.uploader.destroy(member.image.public_id);
+    // If a new file is uploaded: upload new image first, then remove old image
+    if (file) {
+      // Upload new image
       const result = await cloudinary.uploader.upload(file.path, {
         folder: "team_members",
       });
+
+      // store old public_id to delete after successful upload
+      const oldPublicId = member.image?.public_id;
+
       member.image = {
         public_id: result.public_id,
         url: result.secure_url,
       };
+
+      // delete old image only after successful new upload
+      if (oldPublicId) {
+        try {
+          await cloudinary.uploader.destroy(oldPublicId);
+        } catch (err) {
+          // log and continue, don't fail the whole update
+          console.warn("Failed to delete old cloudinary image:", err);
+        }
+      }
     }
 
+    // update other fields
     member.name = name || member.name;
     member.designation = designation || member.designation;
     member.department = department || member.department;
@@ -86,10 +102,11 @@ export const updateMember = async (req, res) => {
     const updated = await member.save();
     res.status(200).json(updated);
   } catch (error) {
-    console.error(error);
+    console.error("Update member error:", error);
     res.status(500).json({ message: "Failed to update member" });
   }
 };
+
 
 // Delete member
 export const deleteMember = async (req, res) => {

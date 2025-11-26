@@ -1,30 +1,35 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
 
 export default function TopRecruiters() {
   const [logos, setLogos] = useState([]);
-  const baseURL = process.env.NEXT_PUBLIC_API_URL;
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
   useEffect(() => {
     const fetchLogos = async () => {
       try {
         const res = await axios.get(`${baseURL}/api/recruiter-logos`);
-        setLogos(res.data);
+        setLogos(res.data || []);
       } catch (err) {
         console.error("Failed to fetch recruiter logos:", err);
       }
     };
     fetchLogos();
-  }, []);
+  }, [baseURL]);
 
   return (
     <section className="relative py-16 bg-gradient-to-r from-blue-50 via-white to-blue-50 border-t border-gray-200 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-blue-800 mb-3">
-          Our Top Recruiters
-        </h2>
+        {/* Heading now links to /recruiters */}
+        <Link href="/recruiters" className="inline-block">
+          <h2 className="text-3xl md:text-4xl font-bold text-blue-800 mb-3 cursor-pointer hover:text-blue-900">
+            Our Top Recruiters
+          </h2>
+        </Link>
+
         <p className="text-gray-500 mb-10">
           Trusted by leading industries and organizations
         </p>
@@ -34,8 +39,12 @@ export default function TopRecruiters() {
         ) : (
           <div className="overflow-hidden relative">
             <div className="scroll-track flex gap-14 items-center">
+              {/* duplicate list to create seamless marquee */}
               {[...logos, ...logos].map((r, i) => (
-                <Logo key={i} logo={r.image?.url} name={r.name} />
+                // Wrap each logo card in Link to /recruiters so clicks navigate there
+                <Link key={`${r._id ?? i}-${i}`} href="/recruiters" className="flex-shrink-0">
+                  <Logo logo={r.image?.url} name={r.name} />
+                </Link>
               ))}
             </div>
           </div>
@@ -71,13 +80,15 @@ function Logo({ logo, name }) {
   return (
     <div className="flex-shrink-0 text-center transition-transform duration-300 hover:scale-105">
       <div className="bg-white rounded-md shadow-sm hover:shadow-lg p-3 w-[150px] h-[110px] flex items-center justify-center mx-auto">
-        <Image
-          src={logo}
-          alt={name}
-          width={120}
-          height={60}
-          className="object-contain"
-        />
+        {logo ? (
+          // If you're using Next.js Image and external domains, ensure next.config.js allows them.
+          <Image src={logo} alt={name || "logo"} width={120} height={60} className="object-contain" />
+        ) : (
+          // fallback to simple placeholder
+          <div className="w-[120px] h-[60px] flex items-center justify-center text-xs text-gray-400">
+            No logo
+          </div>
+        )}
       </div>
       <p className="mt-2 text-sm text-gray-600 font-medium">{name}</p>
     </div>

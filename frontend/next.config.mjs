@@ -1,18 +1,11 @@
+// next.config.mjs
 import withPWA from "next-pwa";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable Turbopack
-  experimental: {
-    turbo: false,
-  },
+  turbopack: {},            // <-- explicit turbopack config to silence Next's error
+  compiler: { emotion: true },
 
-  // Fix Emotion (MUI)
-  compiler: {
-    emotion: true,
-  },
-
-  // Allow Cloudinary images
   images: {
     remotePatterns: [
       {
@@ -26,10 +19,9 @@ const nextConfig = {
   reactStrictMode: true,
 };
 
-// Wrap with PWA
 export default withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development", // Disable PWA during dev
+  disable: process.env.NODE_ENV === "development",
 })(nextConfig);
