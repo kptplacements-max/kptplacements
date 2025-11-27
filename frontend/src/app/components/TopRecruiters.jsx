@@ -42,7 +42,11 @@ export default function TopRecruiters() {
               {/* duplicate list to create seamless marquee */}
               {[...logos, ...logos].map((r, i) => (
                 // Wrap each logo card in Link to /recruiters so clicks navigate there
-                <Link key={`${r._id ?? i}-${i}`} href="/recruiters" className="flex-shrink-0">
+                <Link
+                  key={`${r._id ?? i}-${i}`}
+                  href="/recruiters"
+                  className="flex-shrink-0"
+                >
                   <Logo logo={r.image?.url} name={r.name} />
                 </Link>
               ))}
@@ -55,7 +59,7 @@ export default function TopRecruiters() {
         .scroll-track {
           display: inline-flex;
           white-space: nowrap;
-          animation: scroll 60s linear infinite;
+          animation: scroll 120s linear infinite;
         }
         .scroll-track:hover {
           animation-play-state: paused;
@@ -82,7 +86,13 @@ function Logo({ logo, name }) {
       <div className="bg-white rounded-md shadow-sm hover:shadow-lg p-3 w-[150px] h-[110px] flex items-center justify-center mx-auto">
         {logo ? (
           // If you're using Next.js Image and external domains, ensure next.config.js allows them.
-          <Image src={logo} alt={name || "logo"} width={120} height={60} className="object-contain" />
+          <Image
+            src={logo}
+            alt={name || "logo"}
+            width={120}
+            height={60}
+            className="object-contain"
+          />
         ) : (
           // fallback to simple placeholder
           <div className="w-[120px] h-[60px] flex items-center justify-center text-xs text-gray-400">
