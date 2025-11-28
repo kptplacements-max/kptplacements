@@ -8,11 +8,17 @@ import {
   getMemberById,
   updateMember,
   deleteMember,
+  updateTeamOrder,
 } from "../controllers/teamController.js";
 
 const router = express.Router();
 const upload = multer({ storage });
 
+
+// ✅ PLACE THIS FIRST
+router.put("/update-order", updateTeamOrder);
+
+// Normal CRUD
 router.post("/", upload.single("image"), createMember);
 router.get("/", getMembers);
 router.get("/:id", getMemberById);
