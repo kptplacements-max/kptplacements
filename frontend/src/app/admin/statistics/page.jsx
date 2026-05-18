@@ -40,13 +40,26 @@ export default function PlacementStatisticsManager() {
       isPublic: false, // MANDATORY NEW FIELD
       programs: programs.map((p) => ({
         program: p,
-        male: 0, female: 0, total: 0,
-        passedMale: 0, passedFemale: 0, passedTotal: 0,
-        placedMale: 0, placedFemale: 0, placedTotal: 0,
-        higherMale: 0, higherFemale: 0, higherTotal: 0,
-        dropoutMale: 0, dropoutFemale: 0, dropoutTotal: 0,
-        entrepreneurMale: 0, entrepreneurFemale: 0,
-        percentageMale: 0, percentageFemale: 0, percentageTotal: 0,
+        male: 0,
+        female: 0,
+        total: 0,
+        passedMale: 0,
+        passedFemale: 0,
+        passedTotal: 0,
+        placedMale: 0,
+        placedFemale: 0,
+        placedTotal: 0,
+        higherMale: 0,
+        higherFemale: 0,
+        higherTotal: 0,
+        dropoutMale: 0,
+        dropoutFemale: 0,
+        dropoutTotal: 0,
+        entrepreneurMale: 0,
+        entrepreneurFemale: 0,
+        percentageMale: 0,
+        percentageFemale: 0,
+        percentageTotal: 0,
       })),
       totalStudents: 0,
       totalPassed: 0,
@@ -119,8 +132,8 @@ export default function PlacementStatisticsManager() {
         )}
 
         {/* ACTION BUTTON */}
-        {data && (
-          editing ? (
+        {data &&
+          (editing ? (
             <button
               onClick={handleSave}
               className="bg-green-600 text-white px-4 py-1.5 rounded-md hover:bg-green-700"
@@ -134,8 +147,7 @@ export default function PlacementStatisticsManager() {
             >
               {isNew ? "Add New Data" : "Edit"}
             </button>
-          )
-        )}
+          ))}
       </div>
 
       {loading ? (
@@ -184,15 +196,31 @@ export default function PlacementStatisticsManager() {
                   <th className="border p-1"></th>
 
                   {[
-                    "M","F","T",
-                    "M","F","T",
-                    "M","F","T",
-                    "M","F","T",
-                    "M","F","T",
-                    "M","F",
-                    "%","%","%",
+                    "M",
+                    "F",
+                    "T",
+                    "M",
+                    "F",
+                    "T",
+                    "M",
+                    "F",
+                    "T",
+                    "M",
+                    "F",
+                    "T",
+                    "M",
+                    "F",
+                    "T",
+                    "M",
+                    "F",
+                    "%",
+                    "%",
+                    "%",
                   ].map((h, idx) => (
-                    <th key={idx} className="border p-1 bg-gray-50 text-gray-700">
+                    <th
+                      key={idx}
+                      className="border p-1 bg-gray-50 text-gray-700"
+                    >
                       {h}
                     </th>
                   ))}
@@ -201,24 +229,33 @@ export default function PlacementStatisticsManager() {
 
               <tbody>
                 {data.programs.map((p, i) => (
-                  <tr key={i} className={`text-center ${i % 2 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50`}>
+                  <tr
+                    key={i}
+                    className={`text-center ${i % 2 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50`}
+                  >
                     <td className="border p-1">{i + 1}</td>
-                    <td className="border p-1 font-semibold text-blue-700">{p.program}</td>
+                    <td className="border p-1 font-semibold text-blue-700">
+                      {p.program}
+                    </td>
 
-                    {Object.keys(p).filter(k => k !== "program").map(field => (
-                      <td key={field} className="border p-1">
-                        {editing ? (
-                          <input
-                            type="number"
-                            value={p[field]}
-                            onChange={(e) => handleChange(i, field, e.target.value)}
-                            className="w-14 border rounded text-center"
-                          />
-                        ) : (
-                          p[field]
-                        )}
-                      </td>
-                    ))}
+                    {Object.keys(p)
+                      .filter((k) => k !== "program")
+                      .map((field) => (
+                        <td key={field} className="border p-1">
+                          {editing ? (
+                            <input
+                              type="number"
+                              value={p[field]}
+                              onChange={(e) =>
+                                handleChange(i, field, e.target.value)
+                              }
+                              className="w-14 border rounded text-center"
+                            />
+                          ) : (
+                            p[field]
+                          )}
+                        </td>
+                      ))}
                   </tr>
                 ))}
               </tbody>
@@ -227,12 +264,24 @@ export default function PlacementStatisticsManager() {
 
           {/* TOTALS */}
           <div className="mt-6 border-t pt-4 text-gray-700 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
-            <p><strong>Total Students:</strong> {data.totalStudents}</p>
-            <p><strong>Total Passed:</strong> {data.totalPassed}</p>
-            <p><strong>Total Placed:</strong> {data.totalPlaced}</p>
-            <p><strong>Total Higher Studies:</strong> {data.totalHigherStudies}</p>
-            <p><strong>Total Dropouts:</strong> {data.totalDropouts}</p>
-            <p><strong>Total Entrepreneurs:</strong> {data.totalEntrepreneurs}</p>
+            <p>
+              <strong>Total Students:</strong> {data.totalStudents}
+            </p>
+            <p>
+              <strong>Total Passed:</strong> {data.totalPassed}
+            </p>
+            <p>
+              <strong>Total Placed:</strong> {data.totalPlaced}
+            </p>
+            <p>
+              <strong>Total Higher Studies:</strong> {data.totalHigherStudies}
+            </p>
+            <p>
+              <strong>Total Dropouts:</strong> {data.totalDropouts}
+            </p>
+            <p>
+              <strong>Total Entrepreneurs:</strong> {data.totalEntrepreneurs}
+            </p>
 
             <p className="col-span-full text-blue-700">
               <strong>Overall %:</strong> {data.overallPercentage}%
