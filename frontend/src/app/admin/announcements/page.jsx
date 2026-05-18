@@ -49,8 +49,12 @@ export default function AnnouncementsAdminPage() {
   };
 
   useEffect(() => {
-    fetchAnnouncements();
-  }, [baseURL]);
+    const loadData = async () => {
+      await fetchAnnouncements();
+    };
+
+    loadData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -265,7 +269,11 @@ export default function AnnouncementsAdminPage() {
 
                   <TableCell>
                     {a.link ? (
-                      <a href={a.link} target="_blank" style={{ cursor: "pointer" }}>
+                      <a
+                        href={a.link}
+                        target="_blank"
+                        style={{ cursor: "pointer" }}
+                      >
                         <LinkIcon color="primary" />
                       </a>
                     ) : (
