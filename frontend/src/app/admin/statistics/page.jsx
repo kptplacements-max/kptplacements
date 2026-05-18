@@ -14,10 +14,6 @@ export default function PlacementStatisticsManager() {
   const API = process.env.NEXT_PUBLIC_API_URL;
   const programs = ["AT", "CE", "CH", "CS", "EC", "EE", "ME", "PO"];
 
-  useEffect(() => {
-    if (year.length === 4) fetchData();
-  }, [year]);
-
   const fetchData = async () => {
     if (!year) return;
     setLoading(true);
@@ -94,7 +90,9 @@ export default function PlacementStatisticsManager() {
       toast.error("Failed to save data");
     }
   };
-
+  useEffect(() => {
+    if (year.length === 4) fetchData();
+  }, [year]);
   return (
     <div className="p-4 sm:p-6 bg-white rounded-xl shadow-md">
       {/* Header */}
