@@ -168,6 +168,11 @@ export default function PlacedStudents() {
                 key={s._id}
                 className={`bg-gradient-to-br ${bgGradient} rounded-2xl shadow-lg p-6 flex flex-col items-center hover:-translate-y-2 hover:shadow-2xl transition-transform duration-300`}
               >
+                {/* ✅ Congratulations Badge */}
+                <div className="mb-3 bg-green-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md animate-pulse">
+                  🎉 Congratulations on Your Placement!
+                </div>
+
                 {/* ✅ Photo */}
                 <div className="relative mb-4">
                   <img
