@@ -13,7 +13,16 @@ export default function PlacedStudents() {
     location: "",
   });
   const [loading, setLoading] = useState(true);
-
+  const branchNames = {
+    AT: "Automobile Engineering",
+    CE: "Civil Engineering",
+    CH: "Chemical Engineering",
+    CS: "Computer Science Engineering",
+    EC: "Electronics & Communication Engineering",
+    EE: "Electrical & Electronics Engineering",
+    ME: "Mechanical Engineering",
+    PO: "Polymer Technology",
+  };
   const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/placed-students`;
 
   // ✅ Capitalize Words
@@ -48,19 +57,19 @@ export default function PlacedStudents() {
 
     if (filters.year)
       filteredData = filteredData.filter(
-        (s) => String(s.yearOfPassing) === String(filters.year)
+        (s) => String(s.yearOfPassing) === String(filters.year),
       );
     if (filters.branch)
       filteredData = filteredData.filter((s) =>
-        s.branch?.toLowerCase().includes(filters.branch.toLowerCase())
+        s.branch?.toLowerCase().includes(filters.branch.toLowerCase()),
       );
     if (filters.company)
       filteredData = filteredData.filter((s) =>
-        s.companyName?.toLowerCase().includes(filters.company.toLowerCase())
+        s.companyName?.toLowerCase().includes(filters.company.toLowerCase()),
       );
     if (filters.location)
       filteredData = filteredData.filter((s) =>
-        s.location?.toLowerCase().includes(filters.location.toLowerCase())
+        s.location?.toLowerCase().includes(filters.location.toLowerCase()),
       );
 
     setFiltered(filteredData);
@@ -71,7 +80,9 @@ export default function PlacedStudents() {
   };
 
   if (loading)
-    return <p className="text-center py-10 text-gray-500 text-lg">Loading...</p>;
+    return (
+      <p className="text-center py-10 text-gray-500 text-lg">Loading...</p>
+    );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-sky-50 py-12 px-4 md:px-10">
@@ -130,8 +141,7 @@ export default function PlacedStudents() {
 
       {/* ✅ Results Info */}
       <p className="text-center text-gray-600 mb-6 text-sm">
-        Showing{" "}
-        <strong className="text-blue-700">{filtered.length}</strong>{" "}
+        Showing <strong className="text-blue-700">{filtered.length}</strong>{" "}
         {filtered.length === 1 ? "student" : "students"}
       </p>
 
@@ -188,7 +198,7 @@ export default function PlacedStudents() {
                 <p className="text-sm text-gray-700 mb-2">
                   <strong>Branch:</strong>{" "}
                   <span className="text-blue-700 font-semibold">
-                    {s.branch?.toUpperCase()}
+                    {branchNames[s.branch?.toUpperCase()] || s.branch}
                   </span>
                 </p>
 
