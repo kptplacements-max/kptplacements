@@ -19,7 +19,6 @@ export default function OurTeamPage() {
     fetchTeam();
   }, [baseURL]);
 
-  // ⭐ Categorize into tree levels
   function sortToTree(list) {
     const principal = list.filter(
       (m) => m.designation?.toLowerCase() === "principal"
@@ -29,12 +28,10 @@ export default function OurTeamPage() {
       m.designation?.toLowerCase().includes("training & placement officer")
     );
 
-    // Main Placement Coordinator (same level as TPO)
     const placementOffice = list.filter(
       (m) => m.designation?.toLowerCase() === "placement coordinator"
     );
 
-    // ⭐ NEW: Staff Placement Coordinator
     const staffPc = list.filter((m) =>
       m.designation?.toLowerCase().includes("staff placement coordinator")
     );
@@ -49,49 +46,83 @@ export default function OurTeamPage() {
   const tree = sortToTree(team);
 
   return (
-    <section className="min-h-screen bg-white text-gray-900 py-6 px-6">
+    <section className="min-h-screen bg-white text-gray-900 py-6 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto text-center">
-        <h1 className="text-4xl font-bold mb-1 text-blue-800">Our Team</h1>
-        <p className="text-gray-600 mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-1 text-blue-800">
+          Our Team
+        </h1>
+        <p className="text-gray-600 text-sm sm:text-base mb-5">
           Meet the dedicated members of the Training & Placement Cell.
         </p>
 
-        {/* ⭐ TREE CSS */}
+        {/* ✅ RESPONSIVE TREE STYLES */}
         <style>
           {`
-  .tree { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-  }
+.tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-  .tree-level { 
-    display: flex; 
-    justify-content: center; 
-    gap: 35px; 
-    margin: 15px 0; 
-  }
+.tree-level {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin: 14px 0;
+}
 
-  .node { 
-    text-align: center; 
-    width: 160px; 
-  }
+.node {
+  text-align: center;
+  width: 140px;
+}
 
+@media (min-width: 640px) {
+  .node {
+    width: 160px;
+  }
+}
+
+.node img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #1e4db7;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
   .node img {
     width: 110px;
     height: 110px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid #1e4db7;
-    margin: 0 auto;
+  }
+}
+
+.line-down {
+  width: 2px;
+  height: 18px;
+  background: #1e4db7;
+  margin: 0 auto;
+}
+
+.node h3 {
+  font-size: 14px;
+}
+
+.node p {
+  font-size: 12px;
+}
+
+@media (min-width: 640px) {
+  .node h3 {
+    font-size: 15px;
   }
 
-  .line-down {
-    width: 2px;
-    height: 20px;
-    background: #1e4db7;
-    margin: -5px auto 10px auto;
+  .node p {
+    font-size: 13px;
   }
+}
 `}
         </style>
 
@@ -108,8 +139,8 @@ export default function OurTeamPage() {
                     <div key={p._id} className="node">
                       <img src={p.image?.url} alt={p.name} />
                       <h3 className="font-bold text-blue-800 mt-2">{p.name}</h3>
-                      <p className="text-sm">{p.designation}</p>
-                      <p className="text-xs text-gray-500">{p.department}</p>
+                      <p>{p.designation}</p>
+                      <p className="text-gray-500">{p.department}</p>
                     </div>
                   ))}
                 </div>
@@ -117,7 +148,7 @@ export default function OurTeamPage() {
               </>
             )}
 
-            {/* === TPO + Placement Coordinator SAME LEVEL === */}
+            {/* === TPO + Placement Coordinator === */}
             {(tree.tpo.length > 0 || tree.placementOffice.length > 0) && (
               <>
                 <div className="tree-level">
@@ -125,8 +156,8 @@ export default function OurTeamPage() {
                     <div key={t._id} className="node">
                       <img src={t.image?.url} alt={t.name} />
                       <h3 className="font-bold text-blue-800 mt-2">{t.name}</h3>
-                      <p className="text-sm">{t.designation}</p>
-                      <p className="text-xs text-gray-500">{t.department}</p>
+                      <p>{t.designation}</p>
+                      <p className="text-gray-500">{t.department}</p>
                     </div>
                   ))}
                 </div>
@@ -142,8 +173,8 @@ export default function OurTeamPage() {
                     <div key={pc._id} className="node">
                       <img src={pc.image?.url} alt={pc.name} />
                       <h3 className="font-semibold text-blue-800 mt-2">{pc.name}</h3>
-                      <p className="text-sm">{pc.designation}</p>
-                      <p className="text-xs text-gray-500">{pc.department}</p>
+                      <p>{pc.designation}</p>
+                      <p className="text-gray-500">{pc.department}</p>
                     </div>
                   ))}
                 </div>
@@ -153,13 +184,13 @@ export default function OurTeamPage() {
 
             {/* === Student Placement Coordinators === */}
             {tree.spc.length > 0 && (
-              <div className="tree-level flex flex-wrap justify-center gap-10">
+              <div className="tree-level">
                 {tree.spc.map((s) => (
                   <div key={s._id} className="node">
                     <img src={s.image?.url} alt={s.name} />
                     <h3 className="font-semibold text-blue-800 mt-2">{s.name}</h3>
-                    <p className="text-sm">{s.designation}</p>
-                    <p className="text-xs text-gray-500">{s.department}</p>
+                    <p>{s.designation}</p>
+                    <p className="text-gray-500">{s.department}</p>
                   </div>
                 ))}
               </div>

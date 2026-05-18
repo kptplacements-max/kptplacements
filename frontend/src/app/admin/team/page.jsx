@@ -4,6 +4,23 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaTrash } from "react-icons/fa";
+
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
 
 export default function TeamAdminPage() {
   const [members, setMembers] = useState([]);
@@ -13,43 +30,44 @@ export default function TeamAdminPage() {
     department: "",
     email: "",
     phone: "",
-    image: null, // only used for File objects
+    image: null,
   });
   const [preview, setPreview] = useState(null);
-  const [existingImageUrl, setExistingImageUrl] = useState(null); // existing uploaded image URL (when editing)
+  const [existingImageUrl, setExistingImageUrl] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fileInputRef = useRef(null);
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
 
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || ""; // fallback
+  const sensors = useSensors(useSensor(PointerSensor));
 
+  // Fetch team
   const fetchMembers = async () => {
     try {
       const res = await axios.get(`${baseURL}/api/team`);
       setMembers(res.data);
-    } catch (err) {
-      console.error("Error fetching team members:", err);
-      toast.error("Failed to load team members");
+    } catch {
+      toast.error("Failed to load team");
     }
   };
 
   useEffect(() => {
     fetchMembers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // baseURL is stable; don't re-run unnecessarily
+  }, []);
 
+  // Handle input
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, image: file }));
+      setFormData((p) => ({ ...p, image: file }));
       setPreview(URL.createObjectURL(file));
-      setExistingImageUrl(null); // user selected a new file, forget the old preview
+      setExistingImageUrl(null);
     }
   };
 
@@ -65,87 +83,104 @@ export default function TeamAdminPage() {
     setPreview(null);
     setExistingImageUrl(null);
     setEditingId(null);
-    // clear file input visually
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Submit add/edit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const data = new FormData();
-      data.append("name", formData.name);
-      data.append("designation", formData.designation);
-      data.append("department", formData.department || "");
-      data.append("email", formData.email || "");
-      data.append("phone", formData.phone || "");
-
-      // Append image only if user selected a new file
-      if (formData.image && formData.image instanceof File) {
-        data.append("image", formData.image);
-      }
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) data.append(key, value);
+      });
 
       if (editingId) {
-        // DO NOT set Content-Type manually — axios/browser will set the boundary
         await axios.put(`${baseURL}/api/team/${editingId}`, data);
-        toast.success("Updated successfully!");
+        toast.success("Updated successfully");
       } else {
         await axios.post(`${baseURL}/api/team`, data);
-        toast.success("Added successfully!");
+        toast.success("Added successfully");
       }
 
       resetForm();
       fetchMembers();
-    } catch (error) {
-      console.error("Submit error:", error);
-      // if server returns a message use it
-      const errMsg = error?.response?.data?.message || "Something went wrong!";
-      toast.error(errMsg);
+    } catch (err) {
+      toast.error("Save failed");
     } finally {
       setLoading(false);
     }
   };
 
+  // Delete
   const handleDelete = async (id) => {
-    if (!confirm("Delete this team member?")) return;
+    if (!confirm("Delete this member?")) return;
+
     try {
       await axios.delete(`${baseURL}/api/team/${id}`);
-      toast.success("Deleted successfully!");
+      toast.success("Deleted");
       fetchMembers();
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Failed to delete!");
+    } catch {
+      toast.error("Delete failed");
     }
   };
 
-  const handleEdit = (member) => {
-    setEditingId(member._id);
+  // Edit
+  const handleEdit = (m) => {
+    setEditingId(m._id);
     setFormData({
-      name: member.name || "",
-      designation: member.designation || "",
-      department: member.department || "",
-      email: member.email || "",
-      phone: member.phone || "",
-      image: null, // do not set the existing object here (we only store Files in this field)
+      name: m.name || "",
+      designation: m.designation || "",
+      department: m.department || "",
+      email: m.email || "",
+      phone: m.phone || "",
+      image: null,
     });
-    setPreview(member.image?.url || null);
-    setExistingImageUrl(member.image?.url || null);
-
-    // clear the file input UI (so user doesn't see any leftover file)
+    setPreview(m.image?.url || null);
+    setExistingImageUrl(m.image?.url || null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Drag End
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = members.findIndex((m) => m._id === active.id);
+    const newIndex = members.findIndex((m) => m._id === over.id);
+
+    const reordered = [...members];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    setMembers(reordered);
+
+    const orderData = reordered.map((m, i) => ({
+      _id: m._id,
+      order: i,
+    }));
+
+    try {
+      await axios.put(`${baseURL}/api/team/update-order`, {
+        order: orderData,
+      });
+      toast.success("Order saved");
+    } catch {
+      toast.error("Order save failed");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-6 text-gray-700">
-      {/* Include ToastContainer in this component if you don't have one globally */}
-      <ToastContainer position="top-right" autoClose={2500} />
+      <ToastContainer position="top-right" autoClose={2000} />
 
       <h1 className="text-2xl font-bold mb-6">
-        {editingId ? "Edit Team Member" : "Add New Team Member"}
+        {editingId ? "Edit Team Member" : "Add Team Member"}
       </h1>
 
+      {/* FORM */}
       <form
         onSubmit={handleSubmit}
         className="bg-white shadow-md rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border"
@@ -156,79 +191,127 @@ export default function TeamAdminPage() {
         <FormField label="Email" type="email" name="email" value={formData.email} onChange={handleChange} />
         <FormField label="Phone" name="phone" value={formData.phone} onChange={handleChange} />
 
-        <div className="flex flex-col">
-          <label className="font-medium mb-1">Profile Image</label>
+        <div>
+          <label className="block font-medium mb-1">Profile Image</label>
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            className="border rounded-lg px-3 py-2 cursor-pointer file:px-3 file:bg-blue-600 file:text-white"
+            className="border rounded-lg px-3 py-2 w-full"
           />
-          {/* show preview: prefer newly selected preview, otherwise existing image */}
-          {preview ? (
-            <img src={preview} alt="preview" className="w-24 h-24 object-cover rounded-lg mt-2 border" />
-          ) : existingImageUrl ? (
-            <img src={existingImageUrl} alt="existing" className="w-24 h-24 object-cover rounded-lg mt-2 border" />
-          ) : null}
+
+          {(preview || existingImageUrl) && (
+            <img
+              src={preview || existingImageUrl}
+              alt="preview"
+              className="w-24 h-24 rounded-lg mt-2 object-cover border"
+            />
+          )}
         </div>
 
-        <div className="col-span-full flex justify-center mt-4">
-          <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow">
-            {loading ? "Saving..." : editingId ? "Update Member" : "Add Member"}
+        <div className="col-span-full flex gap-4 justify-center">
+          <button disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg">
+            {loading ? "Saving..." : editingId ? "Update" : "Add"}
           </button>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="ml-3 px-4 py-2 border rounded-lg"
-          >
+          <button type="button" onClick={resetForm} className="border px-4 py-2 rounded-lg">
             Reset
           </button>
         </div>
       </form>
 
-      <h2 className="text-xl font-semibold mt-10 mb-4">Team Members</h2>
-      <div className="space-y-3">
-        {members.map((member) => (
-          <TeamCard key={member._id} member={member} onEdit={handleEdit} onDelete={handleDelete} />
-        ))}
-      </div>
+      {/* TEAM LIST */}
+      <h2 className="text-xl font-semibold mt-10 mb-4">Reorder Team (Drag cards)</h2>
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={members.map((m) => m._id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {members.map((m) => (
+              <SortableTeamCard key={m._id} member={m} onEdit={handleEdit} onDelete={handleDelete} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
 
+// FORM FIELD
 function FormField({ label, name, value, onChange, type = "text", required }) {
   return (
-    <div className="flex flex-col">
-      <label className="font-medium mb-1">{label}</label>
+    <div>
+      <label className="font-medium">{label}</label>
       <input
         type={type}
         name={name}
         value={value}
         required={required}
         onChange={onChange}
-        className="border rounded-lg px-3 py-2"
+        className="w-full border rounded-lg px-3 py-2 mt-1"
       />
     </div>
   );
 }
 
-function TeamCard({ member, onEdit, onDelete }) {
+// SORTABLE CARD
+function SortableTeamCard({ member, onEdit, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: member._id });
+
   return (
-    <div className="flex items-center justify-between bg-white shadow p-3 rounded border">
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className="flex items-center justify-between bg-white p-3 rounded shadow border"
+    >
+      {/* LEFT SECTION */}
       <div className="flex items-center gap-4">
-        <img src={member.image?.url || "/placeholder.jpg"} alt={member.name} className="w-16 h-16 object-cover rounded-full border" />
+        <img
+          src={member.image?.url || "/placeholder.jpg"}
+          alt={member.name}
+          className="w-14 h-14 rounded-full border"
+        />
         <div>
           <h3 className="font-semibold">{member.name}</h3>
-          <p className="text-sm text-gray-600">{member.designation}</p>
+          <p className="text-sm text-gray-500">{member.designation}</p>
         </div>
       </div>
-      <div className="flex gap-2">
-        <button onClick={() => onEdit(member)} className="bg-yellow-400 px-3 py-1 rounded">
+
+      {/* RIGHT SECTION */}
+      <div className="flex gap-2 items-center">
+
+        {/* ✅ DRAG HANDLE ONLY */}
+        <span
+          {...attributes}
+          {...listeners}
+          className="cursor-move bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs select-none"
+          title="Drag to reorder"
+        >
+          ⇅ Move
+        </span>
+
+        {/* ✅ BUTTONS CLICKABLE */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(member);
+          }}
+          className="bg-yellow-300 px-3 py-1 rounded"
+        >
           Edit
         </button>
-        <button onClick={() => onDelete(member._id)} className="bg-red-500 text-white px-3 py-1 rounded">
-          Delete
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(member._id);
+          }}
+          className="bg-red-500 text-white p-2 rounded"
+        >
+          <FaTrash />
         </button>
       </div>
     </div>
