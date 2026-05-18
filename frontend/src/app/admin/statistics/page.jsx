@@ -91,8 +91,14 @@ export default function PlacementStatisticsManager() {
     }
   };
   useEffect(() => {
-    if (year.length === 4) fetchData();
-  }, [year]);
+  if (year.length !== 4) return;
+
+  const timer = setTimeout(() => {
+    fetchData();
+  }, 0);
+
+  return () => clearTimeout(timer);
+}, [year]);
   return (
     <div className="p-4 sm:p-6 bg-white rounded-xl shadow-md">
       {/* Header */}
