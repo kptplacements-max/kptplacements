@@ -7,6 +7,8 @@ import { useUser } from "@clerk/nextjs";
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function PrincipalBudgetPage() {
+  const [budget, setBudget] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { user } = useUser();
   const role = user?.publicMetadata?.role;
 
@@ -17,9 +19,6 @@ export default function PrincipalBudgetPage() {
       </div>
     );
   }
-
-  const [budget, setBudget] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadBudget();
@@ -52,7 +51,9 @@ export default function PrincipalBudgetPage() {
 
   return (
     <div className="p-6">
-      <h2 className="text-3xl font-bold mb-6">Principal – Manage Total Budget</h2>
+      <h2 className="text-3xl font-bold mb-6">
+        Principal – Manage Total Budget
+      </h2>
 
       <label className="font-semibold">Total Placement Budget (₹)</label>
       <input

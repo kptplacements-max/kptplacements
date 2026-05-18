@@ -23,7 +23,7 @@ export default function SWOfficerReviewExpenses() {
   useEffect(() => {
     loadPending();
     loadApproved();
-  }, []);
+  }, [loadApproved]);
 
   // 🔵 Load expenses waiting for SW approval
   async function loadPending() {

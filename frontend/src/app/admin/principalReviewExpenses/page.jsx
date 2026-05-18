@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function PrincipalReviewExpenses() {
+  const [expenses, setExpenses] = useState([]);
   const { user } = useUser();
   const role = user?.publicMetadata?.role;
 
@@ -18,15 +19,13 @@ export default function PrincipalReviewExpenses() {
     );
   }
 
-  const [expenses, setExpenses] = useState([]);
-
   useEffect(() => {
     loadExpenses();
-  }, []);
+  }, [loadExpenses]);
 
   async function loadExpenses() {
     try {
-      const res =await axios.get(`${API}/api/company-expenses?role=principal`);
+      const res = await axios.get(`${API}/api/company-expenses?role=principal`);
 
       setExpenses(res.data);
     } catch (err) {
