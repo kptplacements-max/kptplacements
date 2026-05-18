@@ -170,7 +170,7 @@ export default function PlacedStudents() {
               >
                 {/* ✅ Congratulations Badge */}
                 <div className="mb-3 bg-green-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md animate-pulse">
-                  🎉 Congratulations on Your Placement!
+                  🎉 Congratulations...!
                 </div>
 
                 {/* ✅ Photo */}
