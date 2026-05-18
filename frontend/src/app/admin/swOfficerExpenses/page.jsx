@@ -7,6 +7,8 @@ import { useUser } from "@clerk/nextjs";
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function SWOfficerReviewExpenses() {
+  const [pending, setPending] = useState([]);
+  const [approved, setApproved] = useState([]);
   const { user } = useUser();
   const role = user?.publicMetadata?.role;
 
@@ -18,9 +20,6 @@ export default function SWOfficerReviewExpenses() {
     );
   }
 
-  const [pending, setPending] = useState([]);
-  const [approved, setApproved] = useState([]);
-
   useEffect(() => {
     loadPending();
     loadApproved();
@@ -29,7 +28,9 @@ export default function SWOfficerReviewExpenses() {
   // 🔵 Load expenses waiting for SW approval
   async function loadPending() {
     try {
-      const res = await axios.get(`${API}/api/company-expenses?role=sw-officer`);
+      const res = await axios.get(
+        `${API}/api/company-expenses?role=sw-officer`,
+      );
       setPending(res.data);
     } catch (err) {
       alert("Failed to fetch pending expenses");
@@ -40,7 +41,7 @@ export default function SWOfficerReviewExpenses() {
   async function loadApproved() {
     try {
       const res = await axios.get(
-        `${API}/api/company-expenses?approvedBySWOfficer=true`
+        `${API}/api/company-expenses?approvedBySWOfficer=true`,
       );
       setApproved(res.data);
     } catch (err) {
@@ -80,7 +81,10 @@ export default function SWOfficerReviewExpenses() {
       {pending.map((exp) => {
         const total = exp.items.reduce((s, i) => s + i.amount, 0);
         return (
-          <div key={exp._id} className="border p-4 rounded bg-white shadow-md mb-4">
+          <div
+            key={exp._id}
+            className="border p-4 rounded bg-white shadow-md mb-4"
+          >
             <div className="flex justify-between">
               <div>
                 <h3 className="font-semibold text-lg">
@@ -110,7 +114,10 @@ export default function SWOfficerReviewExpenses() {
 
             <div className="mt-4">
               {exp.items.map((item, i) => (
-                <div key={i} className="flex justify-between border-b py-1 text-sm">
+                <div
+                  key={i}
+                  className="flex justify-between border-b py-1 text-sm"
+                >
                   <span>{item.description}</span>
                   <span className="font-semibold">₹{item.amount}</span>
                 </div>
@@ -146,7 +153,10 @@ export default function SWOfficerReviewExpenses() {
       {approved.map((exp) => {
         const total = exp.items.reduce((s, i) => s + i.amount, 0);
         return (
-          <div key={exp._id} className="border p-4 rounded bg-green-50 shadow-md mb-4">
+          <div
+            key={exp._id}
+            className="border p-4 rounded bg-green-50 shadow-md mb-4"
+          >
             <div className="flex justify-between">
               <div>
                 <h3 className="font-semibold text-lg">
@@ -165,7 +175,10 @@ export default function SWOfficerReviewExpenses() {
 
             <div className="mt-4">
               {exp.items.map((item, i) => (
-                <div key={i} className="flex justify-between border-b py-1 text-sm">
+                <div
+                  key={i}
+                  className="flex justify-between border-b py-1 text-sm"
+                >
                   <span>{item.description}</span>
                   <span className="font-semibold">₹{item.amount}</span>
                 </div>

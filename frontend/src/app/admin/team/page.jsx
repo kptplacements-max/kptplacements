@@ -5,7 +5,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaTrash } from "react-icons/fa";
-
+import Image from "next/image";
 import {
   DndContext,
   closestCenter,
@@ -54,7 +54,7 @@ export default function TeamAdminPage() {
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [fetchMembers]);
 
   // Handle input
   const handleChange = (e) => {
@@ -185,11 +185,39 @@ export default function TeamAdminPage() {
         onSubmit={handleSubmit}
         className="bg-white shadow-md rounded-xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6 border"
       >
-        <FormField label="Name *" name="name" value={formData.name} onChange={handleChange} required />
-        <FormField label="Designation *" name="designation" value={formData.designation} onChange={handleChange} required />
-        <FormField label="Department" name="department" value={formData.department} onChange={handleChange} />
-        <FormField label="Email" type="email" name="email" value={formData.email} onChange={handleChange} />
-        <FormField label="Phone" name="phone" value={formData.phone} onChange={handleChange} />
+        <FormField
+          label="Name *"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+        <FormField
+          label="Designation *"
+          name="designation"
+          value={formData.designation}
+          onChange={handleChange}
+          required
+        />
+        <FormField
+          label="Department"
+          name="department"
+          value={formData.department}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Email"
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+        <FormField
+          label="Phone"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+        />
 
         <div>
           <label className="block font-medium mb-1">Profile Image</label>
@@ -211,23 +239,44 @@ export default function TeamAdminPage() {
         </div>
 
         <div className="col-span-full flex gap-4 justify-center">
-          <button disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg">
+          <button
+            disabled={loading}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+          >
             {loading ? "Saving..." : editingId ? "Update" : "Add"}
           </button>
-          <button type="button" onClick={resetForm} className="border px-4 py-2 rounded-lg">
+          <button
+            type="button"
+            onClick={resetForm}
+            className="border px-4 py-2 rounded-lg"
+          >
             Reset
           </button>
         </div>
       </form>
 
       {/* TEAM LIST */}
-      <h2 className="text-xl font-semibold mt-10 mb-4">Reorder Team (Drag cards)</h2>
+      <h2 className="text-xl font-semibold mt-10 mb-4">
+        Reorder Team (Drag cards)
+      </h2>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={members.map((m) => m._id)} strategy={verticalListSortingStrategy}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={members.map((m) => m._id)}
+          strategy={verticalListSortingStrategy}
+        >
           <div className="space-y-3">
             {members.map((m) => (
-              <SortableTeamCard key={m._id} member={m} onEdit={handleEdit} onDelete={handleDelete} />
+              <SortableTeamCard
+                key={m._id}
+                member={m}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         </SortableContext>
@@ -269,11 +318,12 @@ function SortableTeamCard({ member, onEdit, onDelete }) {
     >
       {/* LEFT SECTION */}
       <div className="flex items-center gap-4">
-        <img
+        <Image
           src={member.image?.url || "/placeholder.jpg"}
           alt={member.name}
           className="w-14 h-14 rounded-full border"
         />
+
         <div>
           <h3 className="font-semibold">{member.name}</h3>
           <p className="text-sm text-gray-500">{member.designation}</p>
@@ -282,7 +332,6 @@ function SortableTeamCard({ member, onEdit, onDelete }) {
 
       {/* RIGHT SECTION */}
       <div className="flex gap-2 items-center">
-
         {/* ✅ DRAG HANDLE ONLY */}
         <span
           {...attributes}
